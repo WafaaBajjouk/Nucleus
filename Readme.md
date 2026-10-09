@@ -26,17 +26,4 @@ flowchart LR
     U --> D
 ```
 
-## Advanced Use Case: Verify a New Version
 
-Admin submits V2. Nucleus launches a disposable candidate, loads sample data and runs health checks plus acceptance tests. Passing verification enables publication; failure produces diagnostics. Existing V1 instances remain available. Live upgrades are outside scope.
-
-```mermaid
-flowchart LR
-    A["Admin submits V2"] --> B["Deploy isolated candidate"]
-    B --> C["Run verification"]
-    C --> D{"Pass?"}
-    D -->|Yes| E["Admin can publish V2"]
-    D -->|No| F["Report failure"]
-    E --> G["Clean up candidate"]
-    F --> G
-```
