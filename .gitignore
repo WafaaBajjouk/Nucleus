@@ -8,3 +8,4 @@ data/config.json
 .env.*
 !.env.example
 config/repositories.json
+Class_notes.md
