@@ -624,9 +624,15 @@ code {
   letter-spacing: 1px;
   color: #7a857e;
 }
-.workspace-label { left: 50px; }
-.projects-label { left: 320px; }
-.services-label { left: 600px; }
+.workspace-label {
+  left: 50px;
+}
+.projects-label {
+  left: 320px;
+}
+.services-label {
+  left: 600px;
+}
 .graph-node {
   position: absolute;
   display: flex;
@@ -642,8 +648,13 @@ code {
   font-size: 12px;
   text-align: left;
 }
-.graph-node strong { font-weight: 600; }
-.graph-node small { font-size: 10px; color: #7a857e; }
+.graph-node strong {
+  font-weight: 600;
+}
+.graph-node small {
+  font-size: 10px;
+  color: #7a857e;
+}
 .workspace-node {
   left: 50px;
   top: 177px;
@@ -652,14 +663,26 @@ code {
   background: #203e2d;
   color: #fff;
 }
-.workspace-node small { color: #c2d6be; }
-.project-node { left: 320px; width: 150px; height: 66px; }
-.project-node:hover { border-color: #6a9670; }
+.workspace-node small {
+  color: #c2d6be;
+}
+.project-node {
+  left: 320px;
+  width: 150px;
+  height: 66px;
+}
+.project-node:hover {
+  border-color: #6a9670;
+}
 .project-node[aria-pressed='true'] {
   background: #f1f8ec;
   border: 2px solid #6a9670;
 }
-.service-node { left: 600px; width: 160px; height: 46px; }
+.service-node {
+  left: 600px;
+  width: 160px;
+  height: 46px;
+}
 .graph-details {
   padding: 16px 23px;
   font-size: 11px;

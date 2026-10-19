@@ -100,9 +100,24 @@ document.addEventListener('keydown', (event) => {
 renderInstances();
 
 const projects = [
-  { id: 'storefront', name: 'Storefront', version: 'v2.4.0', services: ['Web app', 'API', 'PostgreSQL'] },
-  { id: 'atlas', name: 'Atlas API', version: 'v1.8.2', services: ['API', 'PostgreSQL'] },
-  { id: 'pulse', name: 'Pulse Analytics', version: 'v0.9.1', services: ['Dashboard', 'Worker', 'Redis', 'PostgreSQL'] },
+  {
+    id: 'storefront',
+    name: 'Storefront',
+    version: 'v2.4.0',
+    services: ['Web app', 'API', 'PostgreSQL'],
+  },
+  {
+    id: 'atlas',
+    name: 'Atlas API',
+    version: 'v1.8.2',
+    services: ['API', 'PostgreSQL'],
+  },
+  {
+    id: 'pulse',
+    name: 'Pulse Analytics',
+    version: 'v0.9.1',
+    services: ['Dashboard', 'Worker', 'Redis', 'PostgreSQL'],
+  },
 ];
 
 const graph = document.querySelector('#project-graph');
@@ -110,7 +125,10 @@ const graphDetails = document.querySelector('#graph-details');
 
 function selectProject(project) {
   graph.querySelectorAll('[data-project]').forEach((button) => {
-    button.setAttribute('aria-pressed', String(button.dataset.project === project.id));
+    button.setAttribute(
+      'aria-pressed',
+      String(button.dataset.project === project.id),
+    );
   });
 
   const serviceNodes = graph.querySelector('.service-nodes');
@@ -128,7 +146,10 @@ function selectProject(project) {
     serviceNodes.append(node);
 
     const edge = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    edge.setAttribute('d', `M 470 ${projectY} C 535 ${projectY}, 535 ${y}, 600 ${y}`);
+    edge.setAttribute(
+      'd',
+      `M 470 ${projectY} C 535 ${projectY}, 535 ${y}, 600 ${y}`,
+    );
     edges.append(edge);
   });
 
@@ -137,7 +158,9 @@ function selectProject(project) {
 
 graph.querySelectorAll('[data-project]').forEach((button) => {
   button.addEventListener('click', () => {
-    selectProject(projects.find((project) => project.id === button.dataset.project));
+    selectProject(
+      projects.find((project) => project.id === button.dataset.project),
+    );
   });
 });
 selectProject(projects[0]);
