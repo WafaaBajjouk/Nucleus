@@ -1,13 +1,11 @@
-import { position } from './layout.js';
+import { arrangeProjects, centerGraph } from './layout.js';
 export function initGraphToolbar(state, selection) {
-  const { graph, workspace, projectNodes } = state;
+  const { graph } = state;
   document.querySelector('#reset-layout').addEventListener('click', () => {
     selection.clearPositions();
-    position(graph, workspace, 50, 177);
-    projectNodes.forEach((node, index) =>
-      position(graph, node, 320, 57 + index * 120),
-    );
+    arrangeProjects(state);
     graph.querySelector('.service-nodes').replaceChildren();
     selection.selectProject(state.selectedProject);
+    centerGraph(state);
   });
 }

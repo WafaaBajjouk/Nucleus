@@ -1,4 +1,4 @@
-import { position } from './layout.js';
+import { arrangeProjects, centerGraph } from './layout.js';
 import { defaultGithubUsername } from '../../data/config.js';
 
 export function initGraphImport(state, selection, demoProjects) {
@@ -15,17 +15,11 @@ export function initGraphImport(state, selection, demoProjects) {
     state.projects = projects;
     state.projectNodes.forEach((node) => node.remove());
     state.projectNodes.splice(0);
-    const height = Math.max(420, projects.length * 120 + 60);
-    state.graph.style.height = `${height}px`;
-    state.graph
-      .querySelector('svg')
-      .setAttribute('viewBox', `0 0 800 ${height}`);
     state.workspace.querySelector('strong').textContent = owner;
     state.workspace.querySelector('small').textContent = demo
       ? 'Development team'
       : 'GitHub repositories';
-    position(state.graph, state.workspace, 50, 177);
-    projects.forEach((project, index) => {
+    projects.forEach((project) => {
       const node = document.createElement('button');
       node.className = 'graph-node project-node';
       node.dataset.project = project.id;
@@ -40,11 +34,11 @@ export function initGraphImport(state, selection, demoProjects) {
       node.append(title, subtitle);
       state.graph.append(node);
       state.projectNodes.push(node);
-      position(state.graph, node, 320, 57 + index * 120);
     });
     status.textContent = `${projects.length} ${demo ? 'demo projects' : 'repositories'}${demo ? '' : ` · ${owner}`}`;
+    arrangeProjects(state);
     selection.selectProject(projects[0]);
-    state.graph.parentElement.scrollTo(0, 0);
+    centerGraph(state);
   }
 
   async function loadRepositories() {
