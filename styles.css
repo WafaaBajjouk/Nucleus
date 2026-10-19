@@ -578,9 +578,63 @@ code {
 }
 .lower-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: 1.7fr 1fr;
   gap: 25px;
   margin-top: 29px;
+}
+.graph-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.graph-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 24px;
+  background: white;
+  border-bottom: 1px solid var(--line);
+}
+.graph-toolbar h1 {
+  font-size: 20px;
+  margin: 0;
+}
+.graph-page .project-graph-panel {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.graph-page .graph-scroll {
+  flex: 1;
+}
+.graph-page .project-graph {
+  min-height: 420px;
+}
+.graph-page .graph-node {
+  touch-action: none;
+  user-select: none;
+  cursor: grab;
+}
+.graph-page .graph-node.dragging {
+  cursor: grabbing;
+  z-index: 2;
+}
+.graph-page .graph-node:focus-visible {
+  outline: 3px solid #83b89a;
+  outline-offset: 4px;
+}
+@media (max-width: 600px) {
+  .graph-toolbar {
+    padding: 12px;
+    flex-wrap: wrap;
+  }
+  .graph-toolbar h1 {
+    font-size: 16px;
+  }
 }
 .project-graph-panel {
   margin-bottom: 28px;
