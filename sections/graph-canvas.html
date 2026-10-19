@@ -1,0 +1,70 @@
+<section
+  class="panel project-graph-panel"
+  id="projects"
+  aria-labelledby="projects-title"
+>
+  <div class="section-heading">
+    <div>
+      <h2 id="projects-title">Project graph</h2>
+      <p>Select a project to explore its services.</p>
+    </div>
+    <span class="subtle-label">3 of 6 sample projects</span>
+  </div>
+  <p class="graph-help" id="graph-help">
+    Drag nodes with a mouse or touch. Select a project to see its services. Use
+    Tab to focus nodes and arrow keys to move them. Scroll the canvas on smaller
+    screens.
+  </p>
+  <div
+    class="graph-scroll"
+    tabindex="0"
+    role="region"
+    aria-label="Scrollable project graph"
+    aria-describedby="graph-help"
+  >
+    <div class="project-graph" id="project-graph">
+      <svg class="graph-edges" viewBox="0 0 800 420" aria-hidden="true">
+        <g class="workspace-edges">
+          <path d="M 200 210 C 260 210, 260 90, 320 90" />
+          <path d="M 200 210 L 320 210" />
+          <path d="M 200 210 C 260 210, 260 330, 320 330" />
+        </g>
+        <g class="service-edges"></g>
+      </svg>
+      <span class="graph-column-label workspace-label">WORKSPACE</span
+      ><span class="graph-column-label projects-label">PROJECTS</span
+      ><span class="graph-column-label services-label"
+        >SELECTED PROJECT’S SERVICES</span
+      >
+      <div class="graph-node workspace-node">
+        <strong>Nucleus</strong><small>Development team</small>
+      </div>
+      <button
+        class="graph-node project-node"
+        style="top: 57px"
+        data-project="storefront"
+        aria-pressed="true"
+      >
+        <strong>Storefront</strong><small>v2.4.0 · 3 services</small>
+      </button>
+      <button
+        class="graph-node project-node"
+        style="top: 177px"
+        data-project="atlas"
+        aria-pressed="false"
+      >
+        <strong>Atlas API</strong><small>v1.8.2 · 2 services</small>
+      </button>
+      <button
+        class="graph-node project-node"
+        style="top: 297px"
+        data-project="pulse"
+        aria-pressed="false"
+      >
+        <strong>Pulse Analytics</strong><small>v0.9.1 · 4 services</small>
+      </button>
+      <div class="service-nodes"></div>
+    </div>
+  </div>
+  <p class="graph-details" id="graph-details" aria-live="polite"></p>
+</section>

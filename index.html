@@ -6,241 +6,27 @@
     <meta name="theme-color" content="#101916" />
     <title>Nucleus · Dashboard</title>
     <link rel="stylesheet" href="styles.css" />
-    <script src="app.js" defer></script>
+    <script type="module" src="app.js"></script>
   </head>
   <body>
-    <aside class="sidebar">
-      <a class="brand" href="./" aria-label="Nucleus home"
-        ><span class="brand-icon">n</span> nucleus<span class="brand-dot"
-          >.</span
-        ></a
-      >
-      <div class="workspace">
-        <span class="workspace-icon">D</span>
-        <div>Development team<small>Local workspace</small></div>
-      </div>
-      <div class="nav-label">WORKSPACE</div>
-      <nav aria-label="Main navigation">
-        <a class="nav-item active" href="./" aria-current="page"
-          ><span aria-hidden="true">▦</span> Overview
-          <span class="nav-indicator"></span
-        ></a>
-        <a class="nav-item" href="graph.html"
-          ><span aria-hidden="true">◇</span> Project graph</a
-        >
-        <a class="nav-item" href="#instances"
-          ><span aria-hidden="true">▤</span> My instances
-          <span class="nav-count">4</span></a
-        >
-        <a class="nav-item" href="#activity"
-          ><span aria-hidden="true">↗</span> Activity</a
-        >
-      </nav>
-      <div class="sidebar-bottom">
-        <div class="host">
-          <span class="status-dot"></span>
-          <div>
-            Local development<small>Docker connection not configured</small>
-          </div>
-        </div>
-        <div class="profile">
-          <span class="avatar">JD</span>
-          <div>Jamie Davis<small>Demo workspace · Admin</small></div>
-        </div>
-      </div>
-    </aside>
+    <!-- section:sidebar -->
+
     <main>
-      <header class="topbar">
-        <div>Workspace <span>/</span> <strong>Overview</strong></div>
-        <span class="environment"
-          ><span class="status-dot"></span> Local environment</span
-        >
-      </header>
+      <!-- section:header -->
+
       <div class="content">
-        <div class="page-heading">
-          <div>
-            <div class="eyebrow">YOUR DEVELOPMENT WORKSPACE</div>
-            <h1>Everything in its place.</h1>
-            <p>Launch your projects. Keep an eye on what’s running.</p>
-          </div>
-          <a class="button primary" href="#projects"
-            ><span aria-hidden="true">＋</span> Explore projects</a
-          >
-        </div>
-        <div class="demo-notice">
-          <span aria-hidden="true">◈</span> Dashboard preview
-          <span class="notice-detail"
-            >You’re viewing sample data. Docker and authentication are not
-            connected yet.</span
-          >
-        </div>
-        <section class="stats" aria-label="Workspace summary">
-          <article class="stat">
-            <div>Active instances <span aria-hidden="true">▤</span></div>
-            <strong>3<span class="stat-denominator"> / 4</span></strong
-            ><small><span class="status-dot"></span> 1 instance stopped</small>
-          </article>
-          <article class="stat">
-            <div>Available projects <span aria-hidden="true">◇</span></div>
-            <strong>6</strong><small>In your team’s catalogue</small>
-          </article>
-          <article class="stat">
-            <div>CPU usage <span aria-hidden="true">⌁</span></div>
-            <strong>24<span class="stat-unit">%</span></strong
-            ><small>Across running instances</small>
-          </article>
-          <article class="stat">
-            <div>Memory usage <span aria-hidden="true">▥</span></div>
-            <strong>3.2<span class="stat-unit"> GB</span></strong
-            ><small
-              >Of 8 GB allocated <span class="mini-meter"><i></i></span
-            ></small>
-          </article>
-        </section>
-        <section
-          class="panel instances"
-          id="instances"
-          aria-labelledby="instances-title"
-        >
-          <div class="section-heading">
-            <div>
-              <h2 id="instances-title">
-                My instances <span class="count">4</span>
-              </h2>
-              <p>Your environments, at a glance.</p>
-            </div>
-            <label class="search"
-              ><span aria-hidden="true">⌕</span
-              ><input
-                id="instance-search"
-                type="search"
-                placeholder="Search instances…"
-                aria-label="Search instances"
-              /><kbd>/</kbd></label
-            >
-          </div>
-          <div
-            class="filters"
-            role="group"
-            aria-label="Filter instances by status"
-          >
-            <button
-              class="filter selected"
-              data-filter="all"
-              aria-pressed="true"
-            >
-              All instances <span>4</span></button
-            ><button class="filter" data-filter="running" aria-pressed="false">
-              Running <span>3</span></button
-            ><button class="filter" data-filter="stopped" aria-pressed="false">
-              Stopped <span>1</span>
-            </button>
-          </div>
-          <div class="table-scroll">
-            <table>
-              <thead>
-                <tr>
-                  <th scope="col">INSTANCE / PROJECT</th>
-                  <th scope="col">STATUS</th>
-                  <th scope="col">VERSION</th>
-                  <th scope="col">CPU</th>
-                  <th scope="col">MEMORY</th>
-                  <th scope="col">VERIFICATION</th>
-                </tr>
-              </thead>
-              <tbody id="instance-rows"></tbody>
-            </table>
-          </div>
-          <p id="empty-state" class="empty-state" hidden>
-            No instances match your search.
-          </p>
-          <div class="table-footer">
-            <span id="result-count" aria-live="polite">Showing 4 instances</span
-            ><span>Sample environment data</span>
-          </div>
-        </section>
+        <!-- section:heading -->
+        <!-- section:notice -->
+        <!-- section:stats -->
+
+        <!-- section:instances -->
+
         <div class="lower-grid">
-          <section id="projects" aria-labelledby="projects-title">
-            <div class="section-heading compact">
-              <div>
-                <h2 id="projects-title">Ready to build?</h2>
-                <p>A few projects from your catalogue.</p>
-              </div>
-              <a class="subtle-label" href="graph.html">Open project graph →</a>
-            </div>
-            <div class="project-grid">
-              <article class="project-card">
-                <span class="project-icon purple">S</span
-                ><span class="project-type">FULL STACK</span>
-                <h3>Storefront</h3>
-                <p>A commerce playground for your next big idea.</p>
-                <div class="project-footer">
-                  <span>3 services</span><code>v2.4.0</code>
-                </div>
-              </article>
-              <article class="project-card">
-                <span class="project-icon orange">A</span
-                ><span class="project-type">BACKEND</span>
-                <h3>Atlas API</h3>
-                <p>The shared API that keeps everything connected.</p>
-                <div class="project-footer">
-                  <span>2 services</span><code>v1.8.2</code>
-                </div>
-              </article>
-              <article class="project-card">
-                <span class="project-icon blue">P</span
-                ><span class="project-type">INTERNAL TOOL</span>
-                <h3>Pulse Analytics</h3>
-                <p>Explore your data. Find the bigger picture.</p>
-                <div class="project-footer">
-                  <span>4 services</span><code>v0.9.1</code>
-                </div>
-              </article>
-            </div>
-          </section>
-          <section
-            class="panel activity"
-            id="activity"
-            aria-labelledby="activity-title"
-          >
-            <div class="section-heading compact">
-              <h2 id="activity-title">Recent activity</h2>
-              <span class="subtle-label">Demo history</span>
-            </div>
-            <ol>
-              <li>
-                <span class="activity-icon success">✓</span>
-                <div>
-                  <p>Verification passed</p>
-                  <small>storefront-dev · All 8 checks passed</small
-                  ><time>12 minutes ago</time>
-                </div>
-              </li>
-              <li>
-                <span class="activity-icon launch">↗</span>
-                <div>
-                  <p>Instance launched</p>
-                  <small>atlas-api-dev · v1.8.2</small
-                  ><time>38 minutes ago</time>
-                </div>
-              </li>
-              <li>
-                <span class="activity-icon stop">Ⅱ</span>
-                <div>
-                  <p>Instance stopped</p>
-                  <small>pulse-staging · Stopped by you</small
-                  ><time>2 hours ago</time>
-                </div>
-              </li>
-            </ol>
-          </section>
+          <!-- section:projects -->
+
+          <!-- section:activity -->
         </div>
-        <footer class="page-footer">
-          <span
-            ><span class="brand-mark">◈</span> Nucleus
-            <span class="footer-tagline">Launch. Monitor. Verify.</span></span
-          ><span>One workspace. Less setup.</span>
-        </footer>
+        <!-- section:footer -->
       </div>
     </main>
   </body>

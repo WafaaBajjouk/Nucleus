@@ -10,7 +10,56 @@ const routes = {
   '/app.js': ['app.js', 'text/javascript; charset=utf-8'],
   '/graph.html': ['graph.html', 'text/html; charset=utf-8'],
   '/graph.js': ['graph.js', 'text/javascript; charset=utf-8'],
+  '/sections/instances.js': [
+    'sections/instances.js',
+    'text/javascript; charset=utf-8',
+  ],
 };
+
+// Explicit public browser modules; internal server files stay private.
+const browserModules = [
+  'data/instances.js',
+  'data/projects.js',
+  'scripts/instances/render.js',
+  'scripts/instances/controls.js',
+  'scripts/graph/layout.js',
+  'scripts/graph/selection.js',
+  'scripts/graph/interactions.js',
+  'scripts/graph/toolbar.js',
+];
+for (const filename of browserModules) {
+  routes[`/${filename}`] = [filename, 'text/javascript; charset=utf-8'];
+}
+
+// These local templates are assembled before sending the page to the browser.
+const sections = new Set([
+  'sidebar',
+  'header',
+  'heading',
+  'notice',
+  'stats',
+  'instances',
+  'projects',
+  'activity',
+  'footer',
+  'graph-toolbar',
+  'graph-canvas',
+]);
+
+async function renderPage(filename) {
+  const template = await readFile(path.join(__dirname, filename), 'utf8');
+  const markers = [...template.matchAll(/<!-- section:([a-z-]+) -->/g)];
+  const contents = await Promise.all(
+    markers.map(async ([, name]) => {
+      if (!sections.has(name)) throw new Error(`Unknown section: ${name}`);
+      return readFile(path.join(__dirname, 'sections', `${name}.html`), 'utf8');
+    }),
+  );
+  let index = 0;
+  return Buffer.from(
+    template.replace(/<!-- section:([a-z-]+) -->/g, () => contents[index++]),
+  );
+}
 
 const server = http.createServer(async (request, response) => {
   if (request.method !== 'GET' && request.method !== 'HEAD') {
@@ -30,7 +79,9 @@ const server = http.createServer(async (request, response) => {
 
   try {
     const [filename, contentType] = route;
-    const content = await readFile(path.join(__dirname, filename));
+    const content = filename.endsWith('.html')
+      ? await renderPage(filename)
+      : await readFile(path.join(__dirname, filename));
     response.writeHead(200, {
       'Content-Type': contentType,
       'Content-Length': content.length,

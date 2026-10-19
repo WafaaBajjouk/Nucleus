@@ -12,7 +12,15 @@ Open http://localhost:8000. Stop the server with Ctrl+C.
 
 No `npm install` or build step is needed to run the dashboard. The JavaScript server uses only Node.js built-in modules. You can also start it directly with `node server.js`.
 
-## Code formatting
+## File organisation
+
+`index.html` and `graph.html` contain the page layouts. Each `<!-- section:name -->` marker is replaced by the matching HTML file in `sections/` by the Node.js server. To edit one section, open its file, such as `sections/stats.html`, `sections/projects.html`, or `sections/graph-canvas.html`. Reload the browser after saving; no build is needed.
+
+`app.js` starts the dashboard, and `sections/instances.js` connects its instance modules. Sample data lives in `data/`. Table rendering and search/filter controls have separate files in `scripts/instances/`. `graph.js` starts the graph; layout/edges, project selection, dragging/keyboard interactions, and toolbar controls each have a file in `scripts/graph/`. Shared styling remains in `styles.css`.
+
+Run pages through `npm start` so the server can assemble their sections.
+
+## Formatting commands
 
 With Node.js and npm installed, install the development tools and format the code:
 
