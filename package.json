@@ -5,6 +5,7 @@
   "description": "Self-hosted project catalogue and development dashboard",
   "scripts": {
     "start": "node server.js",
+    "test": "node --test tests/*.test.cjs",
     "format": "prettier --write \"**/*.{js,cjs,html,css,json}\"",
     "format:check": "prettier --check \"**/*.{js,cjs,html,css,json}\""
   },

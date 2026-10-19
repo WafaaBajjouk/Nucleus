@@ -23,7 +23,7 @@ export function initGraphImport(state, selection, demoProjects) {
     state.workspace.querySelector('strong').textContent = owner;
     state.workspace.querySelector('small').textContent = demo
       ? 'Development team'
-      : 'GitHub public repositories';
+      : 'GitHub repositories';
     position(state.graph, state.workspace, 50, 177);
     projects.forEach((project, index) => {
       const node = document.createElement('button');
@@ -36,13 +36,13 @@ export function initGraphImport(state, selection, demoProjects) {
       const subtitle = document.createElement('small');
       subtitle.textContent = demo
         ? `${project.version} · ${project.services.length} services`
-        : project.language || 'Repository';
+        : `${project.private ? 'Private' : 'Public'} · ${project.language || 'Repository'}`;
       node.append(title, subtitle);
       state.graph.append(node);
       state.projectNodes.push(node);
       position(state.graph, node, 320, 57 + index * 120);
     });
-    status.textContent = `${projects.length} ${demo ? 'demo projects' : 'public repositories'}${demo ? '' : ` · ${owner}`}`;
+    status.textContent = `${projects.length} ${demo ? 'demo projects' : 'repositories'}${demo ? '' : ` · ${owner}`}`;
     selection.selectProject(projects[0]);
     state.graph.parentElement.scrollTo(0, 0);
   }
@@ -55,7 +55,7 @@ export function initGraphImport(state, selection, demoProjects) {
     }
     submit.disabled = true;
     demoButton.disabled = true;
-    status.textContent = 'Loading public repositories…';
+    status.textContent = 'Loading repositories…';
     try {
       const response = await fetch(
         `/api/github/repos?username=${encodeURIComponent(username)}`,
@@ -64,6 +64,11 @@ export function initGraphImport(state, selection, demoProjects) {
       const result = await response.json();
       if (!response.ok)
         throw new Error(result.error || 'Could not load repositories.');
+      if (result.mode === 'demo') {
+        showProjects(demoProjects, 'Nucleus', true);
+        status.textContent = `${demoProjects.length} demo projects · No GitHub token configured`;
+        return;
+      }
       showProjects(result, username);
     } catch (error) {
       status.textContent = `${error.message} ${state.projects.length ? 'Your current graph is unchanged.' : 'Check the username and select Load repositories to retry.'}`;
@@ -81,8 +86,7 @@ export function initGraphImport(state, selection, demoProjects) {
   );
   input.value = defaultGithubUsername;
   state.workspace.querySelector('strong').textContent = defaultGithubUsername;
-  state.workspace.querySelector('small').textContent =
-    'GitHub public repositories';
+  state.workspace.querySelector('small').textContent = 'GitHub repositories';
   state.details.textContent = 'Loading repositories from GitHub…';
   loadRepositories();
 }

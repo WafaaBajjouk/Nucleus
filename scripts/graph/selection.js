@@ -17,7 +17,8 @@ export function initGraphSelection(state) {
     if (!project) {
       state.selectedProject = null;
       graph.querySelector('.service-nodes').replaceChildren();
-      details.textContent = 'No public repositories found for this account.';
+      details.textContent =
+        'No accessible repositories found for this account.';
       drawEdges(state);
       return;
     }
@@ -45,7 +46,7 @@ export function initGraphSelection(state) {
     });
     details.textContent = `${project.name} · ${project.version} · ${project.services.length} services. Sample configuration; launching is not connected yet.`;
     if (project.source === 'github') {
-      details.textContent = `${project.name} · ${project.language || 'Language not specified'} · ${project.version || 'No default branch'}${project.archived ? ' · Archived' : ''}. ${project.description || 'No description.'} Deployment setup required; services have not been inspected. `;
+      details.textContent = `${project.name} · ${project.private ? 'Private' : 'Public'} · ${project.language || 'Language not specified'} · ${project.version || 'No default branch'}${project.archived ? ' · Archived' : ''}. ${project.description || 'No description.'} Deployment setup required; services have not been inspected. `;
       const link = document.createElement('a');
       link.href = project.url;
       link.textContent = 'Open on GitHub ↗';

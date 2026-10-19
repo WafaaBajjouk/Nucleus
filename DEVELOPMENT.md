@@ -4,29 +4,32 @@ Run `npm start` with Node.js 22+. Open http://localhost:8000 or /graph.html. No 
 
 ## Files
 
-- `index.html`, `graph.html`: page layouts; the server fills section markers.
-- `sections/`: separate HTML sections and instance initialisation.
-- `app.js`, `graph.js`: page entry points.
-- `scripts/instances/`: table rendering and search/filter controls.
-- `scripts/graph/`: layout, selection, dragging, toolbar, and GitHub import.
-- `data/`: demo fixtures; `styles.css`: shared styles.
-- `data/config.js`: default GitHub username loaded automatically when the graph opens.
-- `services/github.cjs`: fetches public repositories from GitHub, including pagination.
-- `server.js`: serves pages/assets and `GET /api/github/repos?username=…`.
+- `index.html`, `graph.html`: page layouts; the server fills HTML from `sections/`.
+- `app.js`, `graph.js`: entry points; `scripts/`: separate instance and graph modules.
+- `data/`: demo fixtures and default GitHub owner. `styles.css`: shared styles.
+- `services/github.cjs`: fetches only configured repositories with the server token.
+- `server.js`: serves pages and `GET /api/github/repos?username=…`.
 
-The stack is plain JavaScript/HTML/CSS/SVG plus Node.js built-ins. The GitHub REST API needs internet access but no credentials. No database, Docker execution, or private-repository support yet. Imported graphs reset on reload.
+## Repository access
 
-## Optional formatting
+Keep only `GITHUB_TOKEN` in ignored `.env`. Allowed names live in ignored `config/repositories.json`, a JSON array of `owner/repository` strings. Copy `config/repositories.example.json` for a new setup. List exactly the repositories selected for the token. Only entries matching the graph's owner are requested. No account-wide or public repository enumeration is used.
+
+Without a token, the local API returns `{ "mode": "demo" }` and the browser shows demo projects. No GitHub requests or repository configuration are needed in demo mode.
+
+With a token, the server calls GitHub REST `GET /repos/{owner}/{repo}` for each entry. GitHub's API does not expose the fine-grained token's selected-repository list, and public metadata is readable beyond that selection; the explicit list enforces what appears. Invalid credentials, missing repository configuration, and denied access remain errors. Responses use `Cache-Control: no-store`. Restart after changing `.env`.
+
+The stack is plain JavaScript/HTML/CSS/SVG and Node.js built-ins. No database or Docker execution. Graph positions reset on reload.
+
+## Checks and formatting
 
 ```sh
+npm test
+# Optional formatter installation:
 npm install
 npm run format
 npm run format:check
 ```
 
-## Quick checks
+Tests cover exact-list requests, owner filtering, missing configuration, denied access, and renamed repositories with mocked GitHub responses.
 
-- Dashboard: search for storefront, switch status filters, and check empty results.
-- Graph: import a public username, select and drag repositories, reset layout, then restore demos.
-- Check unknown usernames, accounts with no public repositories, and rate-limit/network errors. Failed imports keep the current graph.
-- Try keyboard movement and touch dragging. Restart the server after changing server code; reload for browser changes.
+Manually check graph selection/dragging/reset and dashboard search/filters. Keep tokens out of logs, frontend files, and Git commits.

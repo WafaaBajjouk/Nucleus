@@ -1,6 +1,11 @@
 const http = require('node:http');
 const { readFile } = require('node:fs/promises');
 const path = require('node:path');
+try {
+  process.loadEnvFile(path.join(__dirname, '.env'));
+} catch (error) {
+  if (error.code !== 'ENOENT') throw error;
+}
 const { listRepositories } = require('./services/github.cjs');
 
 // Serve only the dashboard assets, keeping repository files private.
@@ -73,6 +78,18 @@ const server = http.createServer(async (request, response) => {
 
   const pathname = new URL(request.url, 'http://localhost').pathname;
   if (pathname === '/api/github/repos') {
+    response.setHeader('Cache-Control', 'no-store');
+    if (!process.env.GITHUB_TOKEN?.trim()) {
+      response.writeHead(200, {
+        'Content-Type': 'application/json; charset=utf-8',
+      });
+      response.end(
+        request.method === 'HEAD'
+          ? undefined
+          : JSON.stringify({ mode: 'demo' }),
+      );
+      return;
+    }
     try {
       const username =
         new URL(request.url, 'http://localhost').searchParams.get('username') ||

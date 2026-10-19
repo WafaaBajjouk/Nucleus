@@ -4,3 +4,7 @@ coverage/
 apps/api/.nucleus/
 .DS_Store
 data/config.json
+.env
+.env.*
+!.env.example
+config/repositories.json
