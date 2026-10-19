@@ -27,18 +27,31 @@ flowchart LR
 ```
 
 
-Final Claim : automate local deployement for dev of companies or teams members by just shooseing the projects they want from the graph and lunch it
+# Local setup
 
+1. Download the **Node.js LTS installer (22+)** for your system from [nodejs.org](https://nodejs.org/en/download).
+2. Run the installer with the default options (npm is included), then restart your terminal.
+3. Check the installation:
 
-questions could be in the exam : what is your claim , which type it is ? whaty is [type] claim of your project
+   ```sh
+   node --version
+   npm --version
+   ```
 
-L05: sodtware lufecycle :
-in software dev , we have scope that is the work promised for delivery .
+4. In the project folder, run:
 
-during lifecycle : if the feedback is costing and wast timw and badget u continue what u were doing until finish to deliver the out scope late( same as ur work experience)
+   ```sh
+   npm install
+   npm start
+   ```
+5. Open **http://localhost:8000**. Press **Ctrl+C** to stop.
 
-the checkout could be external  , or iterative checking , 
+No build step is needed. If `.env` is missing or `GITHUB_TOKEN` is empty, the graph shows mock data.
 
-sprint is a time slot , it is one week to 4 weeks max where clients and dev meets to updates SAL
+To show your own projects:
 
-we can combine the designs of SDLC and have 
+1. Add a GitHub token to `GITHUB_TOKEN` in `.env`.
+2. Give the token access to your projects and list them in `config/repositories.json`.
+3. Restart `npm start`.
+
+The app currently shows project data. Monitoring and launching will be added later.
