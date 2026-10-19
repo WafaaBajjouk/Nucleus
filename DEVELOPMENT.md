@@ -14,9 +14,7 @@ Run `npm start` with Node.js 22+. Open http://localhost:8000 or /graph.html. No 
 
 Keep only `GITHUB_TOKEN` in ignored `.env`. Allowed names live in ignored `config/repositories.json`, a JSON array of `owner/repository` strings. Copy `config/repositories.example.json` for a new setup. List exactly the repositories selected for the token. Only entries matching the graph's owner are requested. No account-wide or public repository enumeration is used.
 
-Without a token, the local API returns `{ "mode": "demo" }` and the browser shows demo projects. No GitHub requests or repository configuration are needed in demo mode.
-
-With a token, the server calls GitHub REST `GET /repos/{owner}/{repo}` for each entry. GitHub's API does not expose the fine-grained token's selected-repository list, and public metadata is readable beyond that selection; the explicit list enforces what appears. Invalid credentials, missing repository configuration, and denied access remain errors. Responses use `Cache-Control: no-store`. Restart after changing `.env`.
+The server calls GitHub REST `GET /repos/{owner}/{repo}` for each entry using the token. GitHub's API does not expose the fine-grained token's selected-repository list, and public metadata is readable beyond that selection; the explicit list enforces what appears. Missing configuration or denied access never falls back to public imports. Responses use `Cache-Control: no-store`. Restart after changing `.env`.
 
 The stack is plain JavaScript/HTML/CSS/SVG and Node.js built-ins. No database or Docker execution. Graph positions reset on reload.
 
