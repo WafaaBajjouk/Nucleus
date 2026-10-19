@@ -24,6 +24,7 @@ export function drawEdges(state) {
   workspaceEdges.replaceChildren();
   serviceEdges.replaceChildren();
   projectNodes.forEach((node) => connect(workspaceEdges, workspace, node));
+  if (!selectedProject) return;
   const selected = projectNodes.find(
     (node) => node.dataset.project === selectedProject.id,
   );

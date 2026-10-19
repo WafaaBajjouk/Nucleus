@@ -600,6 +600,35 @@ code {
   font-size: 20px;
   margin: 0;
 }
+.graph-toolbar {
+  flex-wrap: wrap;
+}
+.github-import {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 12px;
+}
+.github-import input {
+  padding: 9px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  width: 160px;
+}
+.graph-details a {
+  color: var(--green);
+  text-decoration: underline;
+}
+.graph-node strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.graph-scroll {
+  max-height: 75vh;
+  overflow: auto;
+}
 .graph-page .project-graph-panel {
   margin: 0;
   border: 0;

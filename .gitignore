@@ -3,3 +3,4 @@ dist/
 coverage/
 apps/api/.nucleus/
 .DS_Store
+data/config.json

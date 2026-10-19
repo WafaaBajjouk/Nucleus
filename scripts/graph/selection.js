@@ -3,6 +3,7 @@ export function initGraphSelection(state) {
   const { graph, details, projectNodes } = state;
   const savedServices = new Map();
   function rememberServices() {
+    if (!state.selectedProject) return;
     savedServices.set(
       state.selectedProject.id,
       [...graph.querySelectorAll('.service-node')].map((node) => ({
@@ -13,6 +14,13 @@ export function initGraphSelection(state) {
   }
 
   function selectProject(project) {
+    if (!project) {
+      state.selectedProject = null;
+      graph.querySelector('.service-nodes').replaceChildren();
+      details.textContent = 'No public repositories found for this account.';
+      drawEdges(state);
+      return;
+    }
     rememberServices();
     state.selectedProject = project;
     projectNodes.forEach((node) =>
@@ -36,6 +44,15 @@ export function initGraphSelection(state) {
       position(graph, node, saved?.x ?? 600, saved?.y ?? 67 + index * 80);
     });
     details.textContent = `${project.name} · ${project.version} · ${project.services.length} services. Sample configuration; launching is not connected yet.`;
+    if (project.source === 'github') {
+      details.textContent = `${project.name} · ${project.language || 'Language not specified'} · ${project.version || 'No default branch'}${project.archived ? ' · Archived' : ''}. ${project.description || 'No description.'} Deployment setup required; services have not been inspected. `;
+      const link = document.createElement('a');
+      link.href = project.url;
+      link.textContent = 'Open on GitHub ↗';
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      details.append(link);
+    }
     drawEdges(state);
   }
 

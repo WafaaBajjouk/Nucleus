@@ -1,6 +1,7 @@
 const http = require('node:http');
 const { readFile } = require('node:fs/promises');
 const path = require('node:path');
+const { listRepositories } = require('./services/github.cjs');
 
 // Serve only the dashboard assets, keeping repository files private.
 const routes = {
@@ -20,12 +21,14 @@ const routes = {
 const browserModules = [
   'data/instances.js',
   'data/projects.js',
+  'data/config.js',
   'scripts/instances/render.js',
   'scripts/instances/controls.js',
   'scripts/graph/layout.js',
   'scripts/graph/selection.js',
   'scripts/graph/interactions.js',
   'scripts/graph/toolbar.js',
+  'scripts/graph/import.js',
 ];
 for (const filename of browserModules) {
   routes[`/${filename}`] = [filename, 'text/javascript; charset=utf-8'];
@@ -69,6 +72,34 @@ const server = http.createServer(async (request, response) => {
   }
 
   const pathname = new URL(request.url, 'http://localhost').pathname;
+  if (pathname === '/api/github/repos') {
+    try {
+      const username =
+        new URL(request.url, 'http://localhost').searchParams.get('username') ||
+        '';
+      const repositories = await listRepositories(username);
+      response.writeHead(200, {
+        'Content-Type': 'application/json; charset=utf-8',
+      });
+      response.end(
+        request.method === 'HEAD' ? undefined : JSON.stringify(repositories),
+      );
+    } catch (error) {
+      response.writeHead(error.status || 502, {
+        'Content-Type': 'application/json; charset=utf-8',
+      });
+      response.end(
+        request.method === 'HEAD'
+          ? undefined
+          : JSON.stringify({
+              error: error.status
+                ? error.message
+                : 'Could not reach GitHub. Check your connection and try again.',
+            }),
+      );
+    }
+    return;
+  }
   const route = Object.hasOwn(routes, pathname) ? routes[pathname] : null;
 
   if (!route) {

@@ -9,13 +9,13 @@ export function initGraphInteractions(state, selection) {
     'aria-label',
     'Nucleus workspace. Use arrow keys to move.',
   );
-  projectNodes.forEach((node) => {
-    node.addEventListener('click', (event) => {
-      if (!suppressClick || event.detail === 0)
-        selectProject(
-          state.projects.find((project) => project.id === node.dataset.project),
-        );
-    });
+  graph.addEventListener('click', (event) => {
+    const node = event.target.closest('[data-project]');
+    if (node && (!suppressClick || event.detail === 0)) {
+      selectProject(
+        state.projects.find((project) => project.id === node.dataset.project),
+      );
+    }
   });
 
   graph.addEventListener('pointerdown', (event) => {
