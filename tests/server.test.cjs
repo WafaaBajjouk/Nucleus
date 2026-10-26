@@ -16,6 +16,8 @@ function createHandler(token, listRepositories) {
           },
         };
       if (name === './services/github.cjs') return { listRepositories };
+      if (name === './services/examples.cjs')
+        return require('../services/examples.cjs');
       return require(name);
     },
     process: { env: { GITHUB_TOKEN: token }, loadEnvFile() {} },
@@ -30,10 +32,10 @@ function createHandler(token, listRepositories) {
   );
   return handler;
 }
-async function request(handler) {
+async function request(handler, url = '/api/github/repos?username=alice') {
   const result = { headers: {} };
   await handler(
-    { method: 'GET', url: '/api/github/repos?username=alice' },
+    { method: 'GET', url },
     {
       setHeader(key, value) {
         result.headers[key] = value;
@@ -49,6 +51,28 @@ async function request(handler) {
   );
   return result;
 }
+
+test('example API lists exactly the local example folders', async () => {
+  const result = await request(
+    createHandler('', () => {
+      throw Error('Unexpected GitHub call');
+    }),
+    '/api/examples',
+  );
+  const expected = fs
+    .readdirSync(path.join(__dirname, '../examples'), { withFileTypes: true })
+    .filter(
+      (entry) =>
+        entry.isDirectory() &&
+        !entry.name.startsWith('.') &&
+        entry.name !== 'node_modules',
+    )
+    .map((entry) => entry.name)
+    .sort();
+  assert.equal(result.status, 200);
+  assert.deepEqual(result.body.map((project) => project.name).sort(), expected);
+  assert.ok(result.body.every((project) => project.services.length === 0));
+});
 
 test('absent, empty, and whitespace tokens select demos without fetching GitHub', async () => {
   for (const token of [undefined, '', '   ']) {

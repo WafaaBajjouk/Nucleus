@@ -7,6 +7,7 @@ try {
   if (error.code !== 'ENOENT') throw error;
 }
 const { listRepositories } = require('./services/github.cjs');
+const { listExamples } = require('./services/examples.cjs');
 
 // Serve only the dashboard assets, keeping repository files private.
 const routes = {
@@ -77,6 +78,28 @@ const server = http.createServer(async (request, response) => {
   }
 
   const pathname = new URL(request.url, 'http://localhost').pathname;
+  if (pathname === '/api/examples') {
+    response.setHeader('Cache-Control', 'no-store');
+    try {
+      const projects = await listExamples();
+      response.writeHead(200, {
+        'Content-Type': 'application/json; charset=utf-8',
+      });
+      response.end(
+        request.method === 'HEAD' ? undefined : JSON.stringify(projects),
+      );
+    } catch {
+      response.writeHead(500, {
+        'Content-Type': 'application/json; charset=utf-8',
+      });
+      response.end(
+        request.method === 'HEAD'
+          ? undefined
+          : JSON.stringify({ error: 'Could not load local example projects.' }),
+      );
+    }
+    return;
+  }
   if (pathname === '/api/github/repos') {
     response.setHeader('Cache-Control', 'no-store');
     if (!process.env.GITHUB_TOKEN?.trim()) {

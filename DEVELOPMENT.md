@@ -8,6 +8,7 @@ Run `npm start` with Node.js 22+. Open http://localhost:8000 or /graph.html. No 
 - `app.js`, `graph.js`: entry points; `scripts/`: separate instance and graph modules.
 - `data/`: demo fixtures and default GitHub owner. `styles.css`: shared styles.
 - `services/github.cjs`: fetches only configured repositories with the server token.
+- `services/examples.cjs`: lists project folders in `examples/` through `GET /api/examples`. Demo mode and the Demo projects button show one node per folder, without service child nodes. Adding or removing an example updates this list on reload.
 - `server.js`: serves pages and `GET /api/github/repos?username=…`.
 
 ## Repository access

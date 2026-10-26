@@ -1,4 +1,3 @@
-import { projects } from './data/projects.js';
 import { initGraphSelection } from './scripts/graph/selection.js';
 import { initGraphInteractions } from './scripts/graph/interactions.js';
 import { initGraphToolbar } from './scripts/graph/toolbar.js';
@@ -16,4 +15,4 @@ const state = {
 const selection = initGraphSelection(state);
 initGraphInteractions(state, selection);
 initGraphToolbar(state, selection);
-initGraphImport(state, selection, projects);
+initGraphImport(state, selection);
