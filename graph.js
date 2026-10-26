@@ -2,6 +2,7 @@ import { initGraphSelection } from './scripts/graph/selection.js';
 import { initGraphInteractions } from './scripts/graph/interactions.js';
 import { initGraphToolbar } from './scripts/graph/toolbar.js';
 import { initGraphImport } from './scripts/graph/import.js';
+import { initNodeDetails } from './scripts/graph/details.js';
 
 const graph = document.querySelector('#project-graph');
 const state = {
@@ -15,4 +16,5 @@ const state = {
 const selection = initGraphSelection(state);
 initGraphInteractions(state, selection);
 initGraphToolbar(state, selection);
+initNodeDetails(state);
 initGraphImport(state, selection);

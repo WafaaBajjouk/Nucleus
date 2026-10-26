@@ -35,6 +35,7 @@ const browserModules = [
   'scripts/graph/interactions.js',
   'scripts/graph/toolbar.js',
   'scripts/graph/import.js',
+  'scripts/graph/details.js',
 ];
 for (const filename of browserModules) {
   routes[`/${filename}`] = [filename, 'text/javascript; charset=utf-8'];

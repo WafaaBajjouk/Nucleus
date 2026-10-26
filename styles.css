@@ -738,6 +738,34 @@ code {
   font-size: 10px;
   color: #7a857e;
 }
+.node-details {
+  position: fixed;
+  z-index: 100;
+  width: 290px;
+  max-width: calc(100vw - 24px);
+  padding: 16px;
+  border: 1px solid #dbe4d7;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 8px 28px #203b2126;
+  color: #364b3e;
+  overflow-wrap: anywhere;
+}
+.node-details strong {
+  display: block;
+  font-size: 14px;
+}
+.node-details small {
+  display: block;
+  margin-top: 7px;
+  font-size: 11px;
+  color: #7a857e;
+}
+.node-details p {
+  margin-top: 10px;
+  font-size: 12px;
+  line-height: 1.6;
+}
 .workspace-node {
   left: 50px;
   top: 177px;
