@@ -7,9 +7,9 @@ export function arrangeProjects(state) {
   const { graph, workspace, projectNodes } = state;
   // Give each card room on the horizontal and vertical parts of the ring.
   const radiusX = Math.max(280, (projectNodes.length * 240) / (2 * Math.PI));
-  const radiusY = Math.max(180, (projectNodes.length * 130) / (2 * Math.PI));
+  const radiusY = Math.max(200, (projectNodes.length * 190) / (2 * Math.PI));
   const width = Math.ceil(radiusX * 2 + 220);
-  const height = Math.ceil(radiusY * 2 + 180);
+  const height = Math.ceil(radiusY * 2 + 220);
   graph.style.width = `${width}px`;
   graph.style.height = `${height}px`;
   graph.querySelector('svg').setAttribute('viewBox', `0 0 ${width} ${height}`);
@@ -50,15 +50,13 @@ function connect(group, source, target) {
   const sourceScale =
     1 /
     Math.max(
-      Math.abs(dx) / (source.offsetWidth / 2),
-      Math.abs(dy) / (source.offsetHeight / 2),
+      Math.hypot(dx / (source.offsetWidth / 2), dy / (source.offsetHeight / 2)),
       1,
     );
   const targetScale =
     1 /
     Math.max(
-      Math.abs(dx) / (target.offsetWidth / 2),
-      Math.abs(dy) / (target.offsetHeight / 2),
+      Math.hypot(dx / (target.offsetWidth / 2), dy / (target.offsetHeight / 2)),
       1,
     );
   const edge = document.createElementNS('http://www.w3.org/2000/svg', 'path');
