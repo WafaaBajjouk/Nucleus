@@ -32,7 +32,11 @@ function createHandler(token, listRepositories) {
   );
   return handler;
 }
-async function request(handler, url = '/api/github/repos?username=alice') {
+async function request(
+  handler,
+  url = '/api/github/repos?username=alice',
+  json = true,
+) {
   const result = { headers: {} };
   await handler(
     { method: 'GET', url },
@@ -45,7 +49,7 @@ async function request(handler, url = '/api/github/repos?username=alice') {
         Object.assign(result.headers, headers);
       },
       end(body) {
-        result.body = JSON.parse(body);
+        result.body = json ? JSON.parse(body) : body.toString();
       },
     },
   );
@@ -71,7 +75,25 @@ test('example API lists exactly the local example folders', async () => {
     .sort();
   assert.equal(result.status, 200);
   assert.deepEqual(result.body.map((project) => project.name).sort(), expected);
-  assert.ok(result.body.every((project) => project.services.length === 0));
+  assert.ok(result.body.every((project) => project.source === 'example'));
+});
+
+test('dashboard renders a local catalogue without mock instances or activity', async () => {
+  const result = await request(
+    createHandler('test-token', () => {
+      throw Error('Unexpected GitHub call');
+    }),
+    '/',
+    false,
+  );
+  assert.equal(result.status, 200);
+  assert.match(result.body, /id="project-list"/);
+  assert.match(result.body, /id="project-total"/);
+  assert.doesNotMatch(
+    result.body,
+    /Storefront|Atlas API|Pulse Analytics|CPU usage|Memory usage|Verification passed|Jamie Davis/,
+  );
+  assert.doesNotMatch(result.body, /<!-- section:/);
 });
 
 test('absent, empty, and whitespace tokens select demos without fetching GitHub', async () => {

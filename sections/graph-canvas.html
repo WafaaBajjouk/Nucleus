@@ -6,17 +6,14 @@
   <div class="section-heading">
     <div>
       <h2 id="projects-title">Project graph</h2>
-      <p>
-        Only configured repositories accessible with the server token are
-        loaded.
-      </p>
+      <p>Projects from examples/ are shown by default.</p>
     </div>
     <span class="subtle-label" id="graph-status" role="status"
-      >Loading GitHub repositories…</span
+      >Loading local projects…</span
     >
   </div>
   <p class="graph-help" id="graph-help">
-    Drag nodes with a mouse or touch. Select a project to see its services. Use
+    Drag nodes with a mouse or touch. Select a project to see its details. Use
     Tab to focus nodes and see details; use arrow keys to move them. Scroll the
     canvas on smaller screens.
   </p>
@@ -30,12 +27,10 @@
     <div class="project-graph" id="project-graph">
       <svg class="graph-edges" viewBox="0 0 800 420" aria-hidden="true">
         <g class="workspace-edges"></g>
-        <g class="service-edges"></g>
       </svg>
       <div class="graph-node workspace-node">
-        <strong>Nucleus</strong><small>Development team</small>
+        <strong>Nucleus</strong><small>Local projects</small>
       </div>
-      <div class="service-nodes"></div>
     </div>
   </div>
   <p class="graph-details" id="graph-details" aria-live="polite"></p>

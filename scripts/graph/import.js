@@ -1,98 +1,90 @@
-import { arrangeProjects, centerGraph } from './layout.js';
+import { arrangeProjects, centerGraph, drawEdges } from './layout.js';
 import { defaultGithubUsername } from '../../data/config.js';
-import { loadDemoProjects } from '../../data/projects.js';
+import { loadExampleProjects } from '../../data/projects.js';
 
 export function initGraphImport(state, selection) {
   const form = document.querySelector('#github-import');
   const input = document.querySelector('#github-username');
   const submit = form.querySelector('button');
-  const demoButton = document.querySelector('#demo-projects');
+  const localButton = document.querySelector('#local-projects');
   const status = document.querySelector('#graph-status');
+  const requestedProject = new URLSearchParams(window.location.search).get(
+    'project',
+  );
 
-  function showProjects(projects, owner, demo = false) {
-    state.graph.querySelector('.service-nodes').replaceChildren();
-    selection.clearPositions();
-    state.selectedProject = null;
+  function showProjects(projects, owner, local) {
     state.projects = projects;
     state.projectNodes.forEach((node) => node.remove());
     state.projectNodes.splice(0);
     state.workspace.querySelector('strong').textContent = owner;
-    state.workspace.querySelector('small').textContent = demo
-      ? 'Development team'
+    state.workspace.querySelector('small').textContent = local
+      ? 'Local projects'
       : 'GitHub repositories';
     projects.forEach((project) => {
       const node = document.createElement('button');
       node.className = 'graph-node project-node';
       node.dataset.project = project.id;
-      node.title = project.name;
       node.setAttribute('aria-pressed', 'false');
       const title = document.createElement('strong');
       title.textContent = project.name;
       const subtitle = document.createElement('small');
-      subtitle.textContent = demo
+      subtitle.textContent = local
         ? `${project.version} · Local example`
         : `${project.private ? 'Private' : 'Public'} · ${project.language || 'Repository'}`;
       node.append(title, subtitle);
       state.graph.append(node);
       state.projectNodes.push(node);
     });
-    status.textContent = `${projects.length} ${demo ? 'demo projects' : 'repositories'}${demo ? '' : ` · ${owner}`}`;
+    status.textContent = `${projects.length} ${local ? 'local projects' : 'repositories'} · ${owner}`;
     arrangeProjects(state);
-    selection.selectProject(projects[0]);
+    drawEdges(state);
+    selection.selectProject(
+      projects.find((project) => project.id === requestedProject) ||
+        projects[0],
+    );
     centerGraph(state);
   }
 
-  async function loadRepositories() {
-    const username = input.value.trim();
-    if (!/^[a-z\d](?:[a-z\d-]{0,37}[a-z\d])?$/i.test(username)) {
-      status.textContent = 'Enter a valid GitHub username.';
-      return;
-    }
+  // One loading/error path for both sources; startup always chooses examples.
+  async function loadProjects(local) {
     submit.disabled = true;
-    demoButton.disabled = true;
-    status.textContent = 'Loading repositories…';
+    localButton.disabled = true;
+    status.textContent = local
+      ? 'Loading local projects…'
+      : 'Loading GitHub repositories…';
     try {
-      const response = await fetch(
-        `/api/github/repos?username=${encodeURIComponent(username)}`,
-        { signal: AbortSignal.timeout(120000) },
-      );
-      const result = await response.json();
-      if (!response.ok)
-        throw new Error(result.error || 'Could not load repositories.');
-      if (result.mode === 'demo') {
-        const demoProjects = await loadDemoProjects();
-        showProjects(demoProjects, 'Nucleus', true);
-        status.textContent = `${demoProjects.length} demo projects · No GitHub token configured`;
-        return;
+      if (local) {
+        showProjects(await loadExampleProjects(), 'Nucleus', true);
+      } else {
+        const username = input.value.trim();
+        if (!/^[a-z\d](?:[a-z\d-]{0,37}[a-z\d])?$/i.test(username))
+          throw Error('Enter a valid GitHub username.');
+        const response = await fetch(
+          `/api/github/repos?username=${encodeURIComponent(username)}`,
+          { signal: AbortSignal.timeout(120000) },
+        );
+        const result = await response.json();
+        if (!response.ok)
+          throw Error(result.error || 'Could not load repositories.');
+        if (result.mode === 'demo') {
+          showProjects(await loadExampleProjects(), 'Nucleus', true);
+          status.textContent += ' · No GitHub token configured';
+        } else {
+          showProjects(result, username, false);
+        }
       }
-      showProjects(result, username);
     } catch (error) {
-      status.textContent = `${error.message} ${state.projects.length ? 'Your current graph is unchanged.' : 'Check the username and select Load repositories to retry.'}`;
+      status.textContent = `${error.message} ${state.projects.length ? 'Your current graph is unchanged.' : 'Select Local projects to retry.'}`;
     } finally {
       submit.disabled = false;
-      demoButton.disabled = false;
+      localButton.disabled = false;
     }
   }
   form.addEventListener('submit', (event) => {
     event.preventDefault();
-    loadRepositories();
+    loadProjects(false);
   });
-  demoButton.addEventListener('click', async () => {
-    demoButton.disabled = true;
-    submit.disabled = true;
-    status.textContent = 'Loading example projects…';
-    try {
-      showProjects(await loadDemoProjects(), 'Nucleus', true);
-    } catch (error) {
-      status.textContent = `${error.message} Your current graph is unchanged.`;
-    } finally {
-      demoButton.disabled = false;
-      submit.disabled = false;
-    }
-  });
+  localButton.addEventListener('click', () => loadProjects(true));
   input.value = defaultGithubUsername;
-  state.workspace.querySelector('strong').textContent = defaultGithubUsername;
-  state.workspace.querySelector('small').textContent = 'GitHub repositories';
-  state.details.textContent = 'Loading repositories from GitHub…';
-  loadRepositories();
+  return loadProjects(true);
 }

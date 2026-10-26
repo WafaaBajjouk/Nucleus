@@ -17,6 +17,19 @@ async function listExamples(directory = path.join(__dirname, '../examples')) {
   );
   const projects = await Promise.all(
     folders.map(async (entry) => {
+      const files = await readdir(path.join(directory, entry.name), {
+        withFileTypes: true,
+      });
+      const filenames = new Set(
+        files.filter((file) => file.isFile()).map((file) => file.name),
+      );
+      const composeFile =
+        [
+          'compose.yaml',
+          'compose.yml',
+          'docker-compose.yaml',
+          'docker-compose.yml',
+        ].find((name) => filenames.has(name)) || null;
       let metadata = {};
       try {
         metadata = JSON.parse(
@@ -39,7 +52,7 @@ async function listExamples(directory = path.join(__dirname, '../examples')) {
             : 'Local example project.',
         directory: `examples/${entry.name}`,
         source: 'example',
-        services: [],
+        composeFile,
       };
     }),
   );

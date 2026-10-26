@@ -17,5 +17,5 @@ While working in this project , I act as the developer, tester, client and proje
 
 **Current state**:
 
-Currently, Nucleus provides a dashboard and an interactive graph displaying demo projects or configured GitHub repositories, including accessible private repositories.
+Currently, the dashboard and graph read actual project folders from examples/ by default. GitHub repositories, including accessible private repositories, can be loaded explicitly from the graph. Mock instances, metrics and activity have been removed.
 Docker Compose launching, instance controls, monitoring and verification are not yet implemented

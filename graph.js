@@ -15,6 +15,6 @@ const state = {
 };
 const selection = initGraphSelection(state);
 initGraphInteractions(state, selection);
-initGraphToolbar(state, selection);
+initGraphToolbar(state);
 initNodeDetails(state);
 initGraphImport(state, selection);

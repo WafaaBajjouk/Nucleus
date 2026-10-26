@@ -1,7 +1,7 @@
 import { position, drawEdges } from './layout.js';
 export function initGraphInteractions(state, selection) {
-  const { graph, workspace, projectNodes } = state;
-  const { selectProject, rememberServices } = selection;
+  const { graph, workspace } = state;
+  const { selectProject } = selection;
   let drag = null;
   let suppressClick = false;
   workspace.tabIndex = 0;
@@ -51,7 +51,6 @@ export function initGraphInteractions(state, selection) {
     if (drag.node.hasPointerCapture(event.pointerId))
       drag.node.releasePointerCapture(event.pointerId);
     drag = null;
-    rememberServices();
   }
   graph.addEventListener('pointerup', finishDrag);
   graph.addEventListener('pointercancel', finishDrag);
@@ -73,7 +72,6 @@ export function initGraphInteractions(state, selection) {
       node.offsetLeft + direction[0] * step,
       node.offsetTop + direction[1] * step,
     );
-    rememberServices();
     drawEdges(state);
   });
 }

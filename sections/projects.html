@@ -1,38 +1,17 @@
 <section id="projects" aria-labelledby="projects-title">
-  <div class="section-heading compact">
+  <div class="section-heading">
     <div>
-      <h2 id="projects-title">Ready to build?</h2>
-      <p>A few projects from your catalogue.</p>
+      <h2 id="projects-title">Your local projects</h2>
+      <p>Read directly from the examples folder.</p>
     </div>
-    <a class="subtle-label" href="graph.html">Open project graph →</a>
+    <button class="button" id="refresh-projects" type="button">Refresh</button>
   </div>
-  <div class="project-grid">
-    <article class="project-card">
-      <span class="project-icon purple">S</span
-      ><span class="project-type">FULL STACK</span>
-      <h3>Storefront</h3>
-      <p>A commerce playground for your next big idea.</p>
-      <div class="project-footer">
-        <span>3 services</span><code>v2.4.0</code>
-      </div>
-    </article>
-    <article class="project-card">
-      <span class="project-icon orange">A</span
-      ><span class="project-type">BACKEND</span>
-      <h3>Atlas API</h3>
-      <p>The shared API that keeps everything connected.</p>
-      <div class="project-footer">
-        <span>2 services</span><code>v1.8.2</code>
-      </div>
-    </article>
-    <article class="project-card">
-      <span class="project-icon blue">P</span
-      ><span class="project-type">INTERNAL TOOL</span>
-      <h3>Pulse Analytics</h3>
-      <p>Explore your data. Find the bigger picture.</p>
-      <div class="project-footer">
-        <span>4 services</span><code>v0.9.1</code>
-      </div>
-    </article>
-  </div>
+  <label class="search" for="project-search"
+    ><span aria-hidden="true">⌕</span
+    ><input id="project-search" type="search" placeholder="Search projects…"
+  /></label>
+  <p id="project-status" class="project-status" role="status">
+    Loading example projects…
+  </p>
+  <div class="project-grid" id="project-list" aria-busy="true"></div>
 </section>

@@ -5,7 +5,7 @@ const path = require('node:path');
 const os = require('node:os');
 const { listExamples } = require('../services/examples.cjs');
 
-test('each example folder becomes exactly one project, without service nodes', async (t) => {
+test('each example folder becomes exactly one project with real file metadata', async (t) => {
   const directory = await fs.mkdtemp(
     path.join(os.tmpdir(), 'nucleus-examples-'),
   );
@@ -14,6 +14,10 @@ test('each example folder becomes exactly one project, without service nodes', a
   await fs.mkdir(path.join(directory, 'AnotherApp'));
   await fs.mkdir(path.join(directory, '.hidden'));
   await fs.writeFile(path.join(directory, '.DS_Store'), 'ignored');
+  await fs.writeFile(
+    path.join(directory, 'TaskNest/compose.yaml'),
+    'services: {}',
+  );
   await fs.writeFile(
     path.join(directory, 'TaskNest/package.json'),
     JSON.stringify({ name: 'different-package-name', version: '1.0.0' }),
@@ -25,12 +29,9 @@ test('each example folder becomes exactly one project, without service nodes', a
   );
   assert.equal(projects[1].version, '1.0.0');
   assert.equal(projects[1].directory, 'examples/TaskNest');
-  assert.ok(
-    projects.every(
-      (project) =>
-        project.services.length === 0 && project.source === 'example',
-    ),
-  );
+  assert.ok(projects.every((project) => project.source === 'example'));
+  assert.equal(projects[1].composeFile, 'compose.yaml');
+  assert.equal(projects[0].composeFile, null);
   await fs.rm(path.join(directory, 'AnotherApp'), { recursive: true });
   projects = await listExamples(directory);
   assert.deepEqual(

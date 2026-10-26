@@ -70,17 +70,8 @@ function connect(group, source, target) {
 }
 
 export function drawEdges(state) {
-  const { graph, workspace, projectNodes, selectedProject } = state;
-  const workspaceEdges = graph.querySelector('.workspace-edges');
-  const serviceEdges = graph.querySelector('.service-edges');
-  workspaceEdges.replaceChildren();
-  serviceEdges.replaceChildren();
-  projectNodes.forEach((node) => connect(workspaceEdges, workspace, node));
-  if (!selectedProject) return;
-  const selected = projectNodes.find(
-    (node) => node.dataset.project === selectedProject.id,
-  );
-  graph
-    .querySelectorAll('.service-node')
-    .forEach((node) => connect(serviceEdges, selected, node));
+  const { graph, workspace, projectNodes } = state;
+  const edges = graph.querySelector('.workspace-edges');
+  edges.replaceChildren();
+  projectNodes.forEach((node) => connect(edges, workspace, node));
 }

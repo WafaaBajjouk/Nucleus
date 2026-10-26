@@ -6,6 +6,8 @@ A **self-hosted project catalogue**. Admins register containerised projects; use
 
 ## Use Cases
 
+Current implementation: the dashboard and graph list real project folders from `examples/` by default. GitHub loading is optional. Instance launching, live monitoring, verification, and user permissions below remain planned features.
+
 | Actor | Use cases |
 |---|---|
 | Admin | Register projects; configure images, dependencies, settings and checks; test and publish versions; archive projects; manage users, teams, ACLs and quotas. |

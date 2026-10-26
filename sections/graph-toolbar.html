@@ -1,18 +1,25 @@
 <header class="graph-toolbar">
   <a class="button" href="./">← Dashboard</a>
   <h1>Project graph</h1>
-  <form id="github-import" class="github-import">
-    <label for="github-username">GitHub username</label>
-    <input
-      id="github-username"
-      name="username"
-      placeholder="e.g. octocat"
-      required
-      maxlength="39"
-      autocomplete="off"
-    />
-    <button class="button primary" type="submit">Load repositories</button>
-  </form>
-  <button class="button" id="demo-projects" type="button">Demo projects</button>
-  <button class="button primary" id="reset-layout">Reset layout</button>
+  <div class="graph-actions">
+    <button class="button" id="local-projects" type="button">
+      Local projects</button
+    ><button class="button primary" id="reset-layout" type="button">
+      Reset layout
+    </button>
+  </div>
+  <details class="github-settings">
+    <summary>GitHub (optional)</summary>
+    <form id="github-import" class="github-import">
+      <label for="github-username">GitHub username</label
+      ><input
+        id="github-username"
+        name="username"
+        placeholder="Username"
+        required
+        maxlength="39"
+        autocomplete="off"
+      /><button class="button" type="submit">Load repositories</button>
+    </form>
+  </details>
 </header>

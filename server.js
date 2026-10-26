@@ -17,19 +17,13 @@ const routes = {
   '/app.js': ['app.js', 'text/javascript; charset=utf-8'],
   '/graph.html': ['graph.html', 'text/html; charset=utf-8'],
   '/graph.js': ['graph.js', 'text/javascript; charset=utf-8'],
-  '/sections/instances.js': [
-    'sections/instances.js',
-    'text/javascript; charset=utf-8',
-  ],
 };
 
 // Explicit public browser modules; internal server files stay private.
 const browserModules = [
-  'data/instances.js',
   'data/projects.js',
   'data/config.js',
-  'scripts/instances/render.js',
-  'scripts/instances/controls.js',
+  'scripts/dashboard/projects.js',
   'scripts/graph/layout.js',
   'scripts/graph/selection.js',
   'scripts/graph/interactions.js',
@@ -48,9 +42,7 @@ const sections = new Set([
   'heading',
   'notice',
   'stats',
-  'instances',
   'projects',
-  'activity',
   'footer',
   'graph-toolbar',
   'graph-canvas',
@@ -172,7 +164,8 @@ server.on('error', (error) => {
   process.exitCode = 1;
 });
 
-server.listen(8000, '127.0.0.1', () => {
-  console.log('Nucleus is running at http://localhost:8000');
+const port = Number(process.env.PORT || 8000);
+server.listen(port, '127.0.0.1', () => {
+  console.log(`Nucleus is running at http://localhost:${port}`);
   console.log('Press Ctrl+C to stop.');
 });

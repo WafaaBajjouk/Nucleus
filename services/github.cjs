@@ -101,7 +101,6 @@ async function listRepositories(
       language: repo.language,
       url: `https://github.com/${encodeURIComponent(repo.owner.login)}/${encodeURIComponent(repo.name)}`,
       version: repo.default_branch,
-      services: [],
       source: 'github',
       archived: repo.archived,
       private: Boolean(repo.private),
