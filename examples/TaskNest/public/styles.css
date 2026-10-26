@@ -1,0 +1,158 @@
+:root {
+  font-family: system-ui, sans-serif;
+  color: #243d32;
+  background: #f3f6ef;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  padding: 70px 20px;
+}
+main {
+  max-width: 650px;
+  margin: auto;
+}
+.eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #7d9274;
+}
+h1 {
+  font-size: 48px;
+  letter-spacing: -2px;
+  margin: 15px 0;
+}
+h1 span {
+  color: #83ac68;
+}
+.intro {
+  font-size: 14px;
+  color: #7c8977;
+  margin-bottom: 35px;
+}
+form {
+  display: flex;
+  gap: 10px;
+}
+input,
+button {
+  font: inherit;
+}
+#title {
+  min-width: 0;
+  flex: 1;
+  padding: 15px;
+  border: 1px solid #dbe3d3;
+  background: white;
+  border-radius: 8px;
+  font-size: 14px;
+}
+button {
+  border: 0;
+  border-radius: 8px;
+  padding: 12px 18px;
+  background: #345e43;
+  color: white;
+  font-size: 13px;
+  cursor: pointer;
+}
+button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+button:focus-visible,
+input:focus-visible {
+  outline: 3px solid #95bb7b;
+  outline-offset: 3px;
+}
+.list-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 35px;
+}
+h2 {
+  font-size: 14px;
+}
+#count {
+  font-size: 12px;
+  color: #819078;
+}
+#tasks {
+  list-style: none;
+  padding: 0;
+}
+li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  background: white;
+  padding: 18px;
+  border: 1px solid #e0e6d8;
+  border-radius: 9px;
+  margin: 10px 0;
+}
+li label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+}
+li span {
+  overflow-wrap: anywhere;
+}
+input[type='checkbox'] {
+  accent-color: #547b43;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+.completed label span {
+  text-decoration: line-through;
+  color: #98a18e;
+}
+.delete {
+  background: #f5f1ec;
+  color: #8c7362;
+  padding: 7px 10px;
+  font-size: 11px;
+}
+#status {
+  font-size: 13px;
+  color: #7c8977;
+  line-height: 1.6;
+}
+footer {
+  border-top: 1px solid #dfe5d6;
+  margin-top: 35px;
+  padding-top: 20px;
+  font-size: 11px;
+  color: #96a08d;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+@media (max-width: 480px) {
+  body {
+    padding: 35px 18px;
+  }
+  h1 {
+    font-size: 38px;
+  }
+  form {
+    flex-wrap: wrap;
+  }
+  #title {
+    flex-basis: 100%;
+  }
+}

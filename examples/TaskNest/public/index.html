@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Task Board</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <main>
+      <p class="eyebrow">A SMALL SPACE TO GET THINGS DONE</p>
+      <h1>Task Board<span>.</span></h1>
+      <p class="intro">Add a task. Take a step. Make a little progress.</p>
+      <form id="task-form">
+        <label class="sr-only" for="title">New task</label>
+        <input
+          id="title"
+          name="title"
+          placeholder="What needs to get done?"
+          maxlength="120"
+          required
+          autocomplete="off"
+        />
+        <button type="submit">Add task</button>
+      </form>
+      <div class="list-heading">
+        <h2>Your tasks</h2>
+        <span id="count"></span>
+      </div>
+      <p id="status" role="status">Loading tasks…</p>
+      <ul id="tasks" aria-label="Tasks"></ul>
+      <footer>Saved automatically · Tasks stay here after a restart.</footer>
+    </main>
+  </body>
+</html>

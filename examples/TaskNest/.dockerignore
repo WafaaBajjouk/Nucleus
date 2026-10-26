@@ -1,0 +1,6 @@
+.git
+node_modules
+data
+server.test.js
+README.md
+.env
