@@ -18,8 +18,8 @@ export function initGraphImport(state, selection) {
     state.projectNodes.splice(0);
     state.workspace.querySelector('strong').textContent = owner;
     state.workspace.querySelector('small').textContent = local
-      ? 'Local projects'
-      : 'GitHub repositories';
+      ? 'Demo workspace'
+      : 'GitHub projects';
     projects.forEach((project) => {
       const node = document.createElement('button');
       node.className = 'graph-node project-node';
@@ -29,13 +29,13 @@ export function initGraphImport(state, selection) {
       title.textContent = project.name;
       const subtitle = document.createElement('small');
       subtitle.textContent = local
-        ? `${project.version} · Local example`
+        ? `${project.version} · Demo workspace`
         : `${project.private ? 'Private' : 'Public'} · ${project.language || 'Repository'}`;
       node.append(title, subtitle);
       state.graph.append(node);
       state.projectNodes.push(node);
     });
-    status.textContent = `${projects.length} ${local ? 'local projects' : 'repositories'} · ${owner}`;
+    status.textContent = `${projects.length} ${local ? 'demo projects' : 'GitHub projects'} · ${owner}`;
     arrangeProjects(state);
     drawEdges(state);
     selection.selectProject(
@@ -50,8 +50,8 @@ export function initGraphImport(state, selection) {
     submit.disabled = true;
     localButton.disabled = true;
     status.textContent = local
-      ? 'Loading local projects…'
-      : 'Loading GitHub repositories…';
+      ? 'Loading demo workspace…'
+      : 'Loading GitHub projects…';
     try {
       if (local) {
         showProjects(await loadExampleProjects(), 'Nucleus', true);
@@ -68,13 +68,14 @@ export function initGraphImport(state, selection) {
           throw Error(result.error || 'Could not load repositories.');
         if (result.mode === 'demo') {
           showProjects(await loadExampleProjects(), 'Nucleus', true);
-          status.textContent += ' · No GitHub token configured';
+          status.textContent +=
+            ' · No GitHub token configured; using Demo workspace';
         } else {
           showProjects(result, username, false);
         }
       }
     } catch (error) {
-      status.textContent = `${error.message} ${state.projects.length ? 'Your current graph is unchanged.' : 'Select Local projects to retry.'}`;
+      status.textContent = `${error.message} ${state.projects.length ? 'Your current graph is unchanged.' : 'Select Demo workspace to retry.'}`;
     } finally {
       submit.disabled = false;
       localButton.disabled = false;

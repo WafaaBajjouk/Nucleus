@@ -141,7 +141,7 @@ test('graph startup requests only local examples, with optional GitHub left idle
   assert.equal(state.projectNodes.length, 1);
   assert.equal(state.selectedProject.name, 'TaskNest');
   assert.equal(labels.strong.textContent, 'Nucleus');
-  assert.match(nodes['#graph-status'].textContent, /1 local projects/);
+  assert.match(nodes['#graph-status'].textContent, /1 demo projects/);
   assert.equal(submit.disabled, false);
 });
 

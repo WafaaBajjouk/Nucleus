@@ -12,7 +12,7 @@ export function initGraphSelection(state) {
       return;
     }
     if (project.source === 'example') {
-      state.details.textContent = `${project.name} · ${project.version} · ${project.directory}. ${project.description} ${project.composeFile ? `Compose: ${project.composeFile}.` : 'No Compose file found.'} Launching from the graph is not connected yet.`;
+      state.details.textContent = `${project.name} · ${project.version} · Demo workspace. ${project.description} ${project.composeFile ? `Compose: ${project.composeFile}.` : 'No Compose file found.'} Launching from the graph is not connected yet.`;
     } else {
       state.details.textContent = `${project.name} · ${project.private ? 'Private' : 'Public'} · ${project.language || 'Language not specified'} · Branch: ${project.version || 'Not specified'}. ${project.description || 'No description.'} `;
       const link = document.createElement('a');

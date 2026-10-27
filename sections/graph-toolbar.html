@@ -14,13 +14,17 @@
   </button>
   <div class="graph-actions">
     <button class="button" id="local-projects" type="button">
-      Local projects</button
+      Demo workspace</button
     ><button class="button primary" id="reset-layout" type="button">
       Reset layout
     </button>
   </div>
   <details class="github-settings">
-    <summary>GitHub (optional)</summary>
+    <summary>GitHub projects (token connection)</summary>
+    <p class="github-note">
+      Use a GitHub token to access your allowed repositories as projects.
+      Configure the token on the server; no GitHub login is required.
+    </p>
     <form id="github-import" class="github-import">
       <label for="github-username">GitHub username</label
       ><input
@@ -30,7 +34,7 @@
         required
         maxlength="39"
         autocomplete="off"
-      /><button class="button" type="submit">Load repositories</button>
+      /><button class="button" type="submit">Load projects</button>
     </form>
   </details>
 </header>

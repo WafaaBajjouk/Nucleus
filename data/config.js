@@ -1,2 +1,2 @@
-// Default public GitHub account shown when the project graph opens.
-export const defaultGithubUsername = 'WafaaBajjouk';
+// GitHub is optional. Each evaluator enters their own account if needed.
+export const defaultGithubUsername = '';

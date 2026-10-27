@@ -915,3 +915,10 @@ code {
     display: none;
   }
 }
+.github-note {
+  max-width: 380px;
+  margin: 8px 0 12px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.7;
+}

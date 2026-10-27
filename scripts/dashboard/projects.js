@@ -25,7 +25,7 @@ export function initProjectCatalogue() {
         description.textContent = project.description;
         const directory = document.createElement('small');
         directory.className = 'project-directory';
-        directory.textContent = project.directory;
+        directory.textContent = 'Demo workspace';
         const footer = document.createElement('div');
         footer.className = 'project-footer';
         const version = document.createElement('code');
@@ -47,14 +47,14 @@ export function initProjectCatalogue() {
       ? `${visible.length} project${visible.length === 1 ? '' : 's'}`
       : projects.length
         ? 'No projects match your search.'
-        : 'No projects found. Add a project folder to examples/ and refresh.';
+        : 'No projects in this demo workspace.';
   }
 
   async function refreshProjects() {
     refresh.disabled = true;
     search.disabled = true;
     grid.setAttribute('aria-busy', 'true');
-    status.textContent = 'Loading example projects…';
+    status.textContent = 'Loading demo workspace…';
     try {
       projects = await loadExampleProjects();
       document.querySelector('#project-total').textContent = projects.length;

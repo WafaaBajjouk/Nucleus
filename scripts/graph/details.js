@@ -26,7 +26,7 @@ export function initNodeDetails(state) {
       heading.textContent = project.name;
       metadata.textContent =
         project.source === 'example'
-          ? `Version ${project.version} · ${project.directory}`
+          ? `Version ${project.version} · Demo workspace`
           : `${project.private ? 'Private' : 'Public'} · ${project.language || 'Language not specified'} · Branch: ${project.version || 'Not specified'}`;
       description.textContent =
         project.description || 'No description provided.';
