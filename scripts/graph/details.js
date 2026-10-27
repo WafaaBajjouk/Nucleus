@@ -24,10 +24,7 @@ export function initNodeDetails(state) {
     const description = document.createElement('p');
     if (project) {
       heading.textContent = project.name;
-      metadata.textContent =
-        project.source === 'example'
-          ? `Version ${project.version} · Demo workspace`
-          : `${project.private ? 'Private' : 'Public'} · ${project.language || 'Language not specified'} · Branch: ${project.version || 'Not specified'}`;
+      metadata.textContent = `Version ${project.version} · Demo workspace`;
       description.textContent =
         project.description || 'No description provided.';
     } else if (node === state.workspace) {

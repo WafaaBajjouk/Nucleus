@@ -90,17 +90,10 @@ test('dashboard derives counts, cards and search from the shared local catalogue
   assert.equal(nodes['#project-total'].textContent, 1);
 });
 
-test('graph startup requests only local examples, with optional GitHub left idle', async () => {
+test('graph loads the demo workspace from the shared local catalogue', async () => {
   const nodes = Object.fromEntries(
-    [
-      '#github-import',
-      '#github-username',
-      '#local-projects',
-      '#graph-status',
-    ].map((key) => [key, element()]),
+    ['#local-projects', '#graph-status'].map((key) => [key, element()]),
   );
-  const submit = element();
-  nodes['#github-import'].querySelector = () => submit;
   const workspace = element();
   const labels = { strong: element(), small: element() };
   workspace.querySelector = (key) => labels[key];
@@ -112,20 +105,14 @@ test('graph startup requests only local examples, with optional GitHub left idle
     projectNodes: [],
     selectedProject: null,
   };
-  let localCalls = 0,
-    githubCalls = 0;
+  let localCalls = 0;
   const init = controller('scripts/graph/import.js', 'initGraphImport', {
     document: { querySelector: (key) => nodes[key], createElement: element },
     window: { location: { search: '?project=example%3ATaskNest' } },
     URLSearchParams,
-    defaultGithubUsername: 'configured-user',
     loadExampleProjects: async () => {
       localCalls++;
       return [project];
-    },
-    fetch: async () => {
-      githubCalls++;
-      throw Error('GitHub should not run on startup');
     },
     arrangeProjects() {},
     drawEdges() {},
@@ -137,12 +124,11 @@ test('graph startup requests only local examples, with optional GitHub left idle
     },
   });
   assert.equal(localCalls, 1);
-  assert.equal(githubCalls, 0);
   assert.equal(state.projectNodes.length, 1);
   assert.equal(state.selectedProject.name, 'TaskNest');
   assert.equal(labels.strong.textContent, 'Nucleus');
   assert.match(nodes['#graph-status'].textContent, /1 demo projects/);
-  assert.equal(submit.disabled, false);
+  assert.equal(nodes['#local-projects'].disabled, false);
 });
 
 test('dashboard reports local source errors without inventing project counts', async () => {

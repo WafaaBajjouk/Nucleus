@@ -6,6 +6,4 @@ apps/api/.nucleus/
 data/config.json
 .env
 .env.*
-!.env.example
-config/repositories.json
 Class_notes.md

@@ -14,8 +14,7 @@ While working in this project , I act as the developer, tester, client and proje
 4. **Deploy and operate:** "With my developer hat on, I release a tested version" and verify its behaviour on a compatible Docker Compose host.
 5. **Review feedback and maintain:** "With my client hat on, I assess whether the workflow reduces manual setup. With my project owner hat on, I use that evidence to keep, change or stop planned work. With my developer hat on, I implement the agreed improvements."
 
-
 **Current state**:
 
-Currently, the dashboard and graph read actual project folders from examples/ by default. GitHub repositories, including accessible private repositories, can be loaded explicitly from the graph. Mock instances, metrics and activity have been removed.
+Currently, the dashboard and graph read actual project folders from examples/ by default. Mock instances, metrics and activity have been removed.
 Docker Compose launching, instance controls, monitoring and verification are not yet implemented

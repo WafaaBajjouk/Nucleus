@@ -6,7 +6,7 @@ A **self-hosted project catalogue**. Admins register containerised projects; use
 
 ## Use Cases
 
-Current implementation: the dashboard and graph list real project folders from `examples/` by default. GitHub loading is optional. Instance launching, live monitoring, verification, and user permissions below remain planned features.
+Current implementation: the dashboard and graph list real project folders from `examples/` by default. Instance launching, live monitoring, verification, and user permissions below remain planned features.
 
 | Actor | Use cases |
 |---|---|
@@ -48,12 +48,6 @@ flowchart LR
    ```
 5. Open **http://localhost:8000**. Press **Ctrl+C** to stop.
 
-No build step is needed. If `.env` is missing or `GITHUB_TOKEN` is empty, the graph shows mock data.
-
-To show your own projects:
-
-1. Add a GitHub token to `GITHUB_TOKEN` in `.env`.
-2. Give the token access to your projects and list them in `config/repositories.json`.
-3. Restart `npm start`.
+No build step is needed. The dashboard and graph show the included Demo workspace projects. No account or token is required.
 
 The app currently shows project data. Monitoring and launching will be added later.

@@ -7,7 +7,7 @@ npm install
 npm start
 ```
 
-Open **http://localhost:8000**. No token, GitHub account or Docker is needed to browse the workspace. No applications start automatically.
+Open **http://localhost:8000**. No account or Docker is needed to browse the workspace. No applications start automatically.
 
 The dashboard and graph show four included test projects:
 
@@ -36,7 +36,7 @@ JsonDesk: run `npm start` in `examples/JsonDesk`, then open http://localhost:300
 
 TextScope: run `npm start` in `examples/TextScope`, then open http://localhost:3003.
 
-Press Ctrl+C in each terminal to stop. TaskNest starts with no tasks on a fresh copy; UnitLab saves no data. TaskNest runtime data, personal tokens and GitHub configuration are not included in Git.
+Press Ctrl+C in each terminal to stop. TaskNest starts with no tasks on a fresh copy; UnitLab saves no data. TaskNest runtime data is not included in Git.
 
 From the Nucleus project folder, run automated checks:
 

@@ -482,30 +482,6 @@ code {
   display: flex;
   gap: 10px;
 }
-.github-settings {
-  font-size: 11px;
-  color: var(--muted);
-}
-.github-settings summary {
-  cursor: pointer;
-  padding: 10px;
-}
-.github-import {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 10px;
-}
-.github-import input {
-  border: 1px solid var(--line);
-  border-radius: 7px;
-  background: var(--surface);
-  color: var(--text);
-  padding: 9px;
-  width: 150px;
-  font-size: 12px;
-}
 .panel {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -777,9 +753,6 @@ code {
   .graph-toolbar h1 {
     font-size: 17px;
   }
-  .github-settings {
-    width: 100%;
-  }
   .graph-scroll {
     min-height: 420px;
   }
@@ -914,11 +887,4 @@ code {
   .header-actions .environment {
     display: none;
   }
-}
-.github-note {
-  max-width: 380px;
-  margin: 8px 0 12px;
-  color: var(--muted);
-  font-size: 11px;
-  line-height: 1.7;
 }

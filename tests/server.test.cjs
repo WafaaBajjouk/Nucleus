@@ -4,7 +4,7 @@ const vm = require('node:vm');
 const fs = require('node:fs');
 const path = require('node:path');
 
-function createHandler(token, listRepositories) {
+function createHandler() {
   let handler;
   const context = {
     require(name) {
@@ -15,12 +15,11 @@ function createHandler(token, listRepositories) {
             return { on() {}, listen() {} };
           },
         };
-      if (name === './services/github.cjs') return { listRepositories };
       if (name === './services/examples.cjs')
         return require('../services/examples.cjs');
       return require(name);
     },
-    process: { env: { GITHUB_TOKEN: token }, loadEnvFile() {} },
+    process: { env: {} },
     __dirname: path.join(__dirname, '..'),
     Buffer,
     URL,
@@ -32,11 +31,7 @@ function createHandler(token, listRepositories) {
   );
   return handler;
 }
-async function request(
-  handler,
-  url = '/api/github/repos?username=alice',
-  json = true,
-) {
+async function request(handler, url = '/api/examples', json = true) {
   const result = { headers: {} };
   await handler(
     { method: 'GET', url },
@@ -57,12 +52,7 @@ async function request(
 }
 
 test('example API lists exactly the local example folders', async () => {
-  const result = await request(
-    createHandler('', () => {
-      throw Error('Unexpected GitHub call');
-    }),
-    '/api/examples',
-  );
+  const result = await request(createHandler(), '/api/examples');
   const expected = fs
     .readdirSync(path.join(__dirname, '../examples'), { withFileTypes: true })
     .filter(
@@ -79,13 +69,7 @@ test('example API lists exactly the local example folders', async () => {
 });
 
 test('dashboard renders a local catalogue without mock instances or activity', async () => {
-  const result = await request(
-    createHandler('test-token', () => {
-      throw Error('Unexpected GitHub call');
-    }),
-    '/',
-    false,
-  );
+  const result = await request(createHandler(), '/', false);
   assert.equal(result.status, 200);
   assert.match(result.body, /id="project-list"/);
   assert.match(result.body, /id="project-total"/);
@@ -96,32 +80,21 @@ test('dashboard renders a local catalogue without mock instances or activity', a
   assert.doesNotMatch(result.body, /<!-- section:/);
 });
 
-test('absent, empty, and whitespace tokens select demos without fetching GitHub', async () => {
-  for (const token of [undefined, '', '   ']) {
-    const result = await request(
-      createHandler(token, () => {
-        throw Error('Unexpected GitHub call');
-      }),
-    );
-    assert.equal(result.status, 200);
-    assert.equal(result.body.mode, 'demo');
-    assert.equal(result.headers['Cache-Control'], 'no-store');
-  }
-});
-test('configured token loads real repositories', async () => {
-  const result = await request(
-    createHandler('test-token', async () => [{ name: 'selected' }]),
-  );
+test('graph renders the demo workspace without a remote connection form', async () => {
+  const result = await request(createHandler(), '/graph.html', false);
   assert.equal(result.status, 200);
-  assert.deepEqual(result.body, [{ name: 'selected' }]);
+  assert.match(result.body, /Demo workspace/);
+  assert.doesNotMatch(result.body, /github|username|token/i);
 });
-test('invalid configured token stays an error instead of silently selecting demos', async () => {
-  const result = await request(
-    createHandler('bad-token', async () => {
-      throw Object.assign(new Error('Token invalid'), { status: 401 });
-    }),
-  );
-  assert.equal(result.status, 401);
-  assert.equal(result.body.error, 'Token invalid');
-  assert.equal(result.body.mode, undefined);
+
+test('retired remote API and private configuration are not served', async () => {
+  for (const url of [
+    '/api/github/repos',
+    '/data/config.js',
+    '/.env',
+    '/config/repositories.json',
+  ]) {
+    const result = await request(createHandler(), url, false);
+    assert.equal(result.status, 404);
+  }
 });

@@ -1,12 +1,6 @@
 const http = require('node:http');
 const { readFile } = require('node:fs/promises');
 const path = require('node:path');
-try {
-  process.loadEnvFile(path.join(__dirname, '.env'));
-} catch (error) {
-  if (error.code !== 'ENOENT') throw error;
-}
-const { listRepositories } = require('./services/github.cjs');
 const { listExamples } = require('./services/examples.cjs');
 
 // Serve only the dashboard assets, keeping repository files private.
@@ -23,7 +17,6 @@ const routes = {
 // Explicit public browser modules; internal server files stay private.
 const browserModules = [
   'data/projects.js',
-  'data/config.js',
   'scripts/dashboard/projects.js',
   'scripts/graph/layout.js',
   'scripts/graph/selection.js',
@@ -90,46 +83,6 @@ const server = http.createServer(async (request, response) => {
         request.method === 'HEAD'
           ? undefined
           : JSON.stringify({ error: 'Could not load local example projects.' }),
-      );
-    }
-    return;
-  }
-  if (pathname === '/api/github/repos') {
-    response.setHeader('Cache-Control', 'no-store');
-    if (!process.env.GITHUB_TOKEN?.trim()) {
-      response.writeHead(200, {
-        'Content-Type': 'application/json; charset=utf-8',
-      });
-      response.end(
-        request.method === 'HEAD'
-          ? undefined
-          : JSON.stringify({ mode: 'demo' }),
-      );
-      return;
-    }
-    try {
-      const username =
-        new URL(request.url, 'http://localhost').searchParams.get('username') ||
-        '';
-      const repositories = await listRepositories(username);
-      response.writeHead(200, {
-        'Content-Type': 'application/json; charset=utf-8',
-      });
-      response.end(
-        request.method === 'HEAD' ? undefined : JSON.stringify(repositories),
-      );
-    } catch (error) {
-      response.writeHead(error.status || 502, {
-        'Content-Type': 'application/json; charset=utf-8',
-      });
-      response.end(
-        request.method === 'HEAD'
-          ? undefined
-          : JSON.stringify({
-              error: error.status
-                ? error.message
-                : 'Could not reach GitHub. Check your connection and try again.',
-            }),
       );
     }
     return;
