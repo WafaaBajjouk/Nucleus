@@ -6,4 +6,8 @@ apps/api/.nucleus/
 data/config.json
 .env
 .env.*
-Class_notes.md
+
+# Keep only the main README and task list in Git
+*.md
+!/Readme.md
+!/Tasks.md
