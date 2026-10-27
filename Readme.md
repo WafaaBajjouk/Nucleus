@@ -8,6 +8,8 @@ A **self-hosted project catalogue**. Admins register containerised projects; use
 
 Current implementation: the dashboard and graph list real project folders from `examples/` by default. Instance launching, live monitoring, verification, and user permissions below remain planned features.
 
+For a clean local evaluation with the two included projects, see [EVALUATION.md](EVALUATION.md).
+
 | Actor | Use cases |
 |---|---|
 | Admin | Register projects; configure images, dependencies, settings and checks; test and publish versions; archive projects; manage users, teams, ACLs and quotas. |
@@ -28,26 +30,3 @@ flowchart LR
     U --> D
 ```
 
-
-# Local setup
-
-1. Download the **Node.js LTS installer (22+)** for your system from [nodejs.org](https://nodejs.org/en/download).
-2. Run the installer with the default options (npm is included), then restart your terminal.
-3. Check the installation:
-
-   ```sh
-   node --version
-   npm --version
-   ```
-
-4. In the project folder, run:
-
-   ```sh
-   npm install
-   npm start
-   ```
-5. Open **http://localhost:8000**. Press **Ctrl+C** to stop.
-
-No build step is needed. The dashboard and graph show the included Demo workspace projects. No account or token is required.
-
-The app currently shows project data. Monitoring and launching will be added later.
