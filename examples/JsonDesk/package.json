@@ -1,0 +1,10 @@
+{
+  "name": "jsondesk",
+  "version": "0.1.0",
+  "description": "Validate and format JSON documents in a simple web editor.",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test server.test.js"
+  }
+}

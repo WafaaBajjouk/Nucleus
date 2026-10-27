@@ -1,5 +1,6 @@
 {
-  "name": "task-board-demo",
+  "name": "tasknest",
+  "description": "A task tracker: add, complete, reopen and delete tasks, with data saved across restarts.",
   "version": "1.0.0",
   "private": true,
   "scripts": {

@@ -1,0 +1,20 @@
+services:
+  app:
+    build: .
+    ports:
+      - '127.0.0.1:${TEXTSCOPE_PORT:-8084}:3003'
+    init: true
+    read_only: true
+    cap_drop: [ALL]
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3003/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+      start_period: 5s

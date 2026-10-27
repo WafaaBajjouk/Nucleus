@@ -1,0 +1,10 @@
+{
+  "name": "unitlab",
+  "version": "0.1.0",
+  "description": "Convert distances between meters, kilometers, feet and miles. A stateless API and web interface.",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test server.test.js"
+  }
+}

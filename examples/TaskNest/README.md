@@ -1,4 +1,4 @@
-# Task Board
+# TaskNest
 
 A small task tracker: add tasks, mark them done, reopen or delete them. Tasks are saved in a JSON file and survive restarts. Built with plain JavaScript, HTML, CSS and Node.js, without dependencies.
 

@@ -1,0 +1,10 @@
+{
+  "name": "textscope",
+  "version": "0.1.0",
+  "description": "Analyze text to count words, characters, lines and paragraphs.",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test server.test.js"
+  }
+}

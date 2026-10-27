@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>JsonDesk</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <main>
+      <p class="eyebrow">DEMO WORKSPACE · SMALL TOOLS</p>
+      <h1>JsonDesk</h1>
+      <p class="intro">
+        Validate and format JSON documents in a simple web editor.
+      </p>
+      <form id="tool">
+        <label for="text">Paste a JSON document</label
+        ><textarea id="text" name="text" rows="9">
+{"project":"Nucleus","ready":true}</textarea
+        ><button type="submit">Format JSON</button>
+      </form>
+      <p id="status" role="status">Ready when you are.</p>
+      <pre id="result" aria-label="Result"></pre>
+      <footer>Processed in memory. No documents are stored.</footer>
+    </main>
+  </body>
+</html>
