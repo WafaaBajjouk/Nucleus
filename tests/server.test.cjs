@@ -1,46 +1,21 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const vm = require('node:vm');
 const fs = require('node:fs');
 const path = require('node:path');
+const { createAppController } = require('../controllers/app-controller.cjs');
+const { listExamples } = require('../models/example-catalogue.cjs');
 
 function createHandler() {
-  let handler;
-  const context = {
-    require(name) {
-      if (name === 'node:http')
-        return {
-          createServer(callback) {
-            handler = callback;
-            return { on() {}, listen() {} };
-          },
-        };
-      if (name === './services/examples.cjs')
-        return require('../services/examples.cjs');
-      if (name === './services/instances.cjs')
-        return {
-          createInstances: () => ({
-            engineStatus: async () => ({ ready: true }),
-            list: async () => [],
-            launch: async () => ({ id: 'nucleus-test', status: 'starting' }),
-            remove: async () => {},
-          }),
-        };
-      if (name === './services/instance-api.cjs')
-        return require('../services/instance-api.cjs');
-      return require(name);
+  return createAppController({
+    getExamples: listExamples,
+    instances: {
+      engineStatus: async () => ({ ready: true }),
+      list: async () => [],
+      launch: async () => ({ id: 'nucleus-test', status: 'starting' }),
+      remove: async () => {},
     },
-    process: { env: {} },
-    __dirname: path.join(__dirname, '..'),
-    Buffer,
-    URL,
-    console,
-  };
-  vm.runInNewContext(
-    fs.readFileSync(path.join(__dirname, '../server.js'), 'utf8'),
-    context,
-  );
-  return handler;
+    root: path.join(__dirname, '..'),
+  });
 }
 async function request(handler, url = '/api/examples', json = true) {
   const result = { headers: {} };

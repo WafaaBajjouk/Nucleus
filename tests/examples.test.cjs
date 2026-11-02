@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs/promises');
 const path = require('node:path');
 const os = require('node:os');
-const { listExamples } = require('../services/examples.cjs');
+const { listExamples } = require('../models/example-catalogue.cjs');
 
 test('each example folder becomes exactly one project with real file metadata', async (t) => {
   const directory = await fs.mkdtemp(

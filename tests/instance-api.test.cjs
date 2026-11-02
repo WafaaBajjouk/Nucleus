@@ -1,7 +1,9 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { Readable } = require('node:stream');
-const { instanceApi } = require('../services/instance-api.cjs');
+const {
+  handleInstanceRequest,
+} = require('../controllers/instance-controller.cjs');
 
 async function request({
   method = 'POST',
@@ -22,7 +24,7 @@ async function request({
     },
   });
   const result = { headers: {} };
-  result.handled = await instanceApi(
+  result.handled = await handleInstanceRequest(
     input,
     {
       setHeader(name, value) {

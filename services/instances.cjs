@@ -286,7 +286,7 @@ function createInstances({ root = path.join(__dirname, '..'), run } = {}) {
         409,
       );
 
-    const { listExamples } = require('./examples.cjs');
+    const { listExamples } = require('../models/example-catalogue.cjs');
     const projects = await listExamples(path.join(root, 'examples'));
     const project = projects.find(
       (item) => item.id === projectId && item.composeFile,

@@ -1,4 +1,4 @@
-async function instanceApi(request, response, instances) {
+async function handleInstanceRequest(request, response, instances) {
   const pathname = new URL(request.url, 'http://localhost').pathname;
   if (
     pathname !== '/api/engine' &&
@@ -96,4 +96,4 @@ async function instanceApi(request, response, instances) {
   return true;
 }
 
-module.exports = { instanceApi };
+module.exports = { handleInstanceRequest };
