@@ -22,6 +22,7 @@ const browserModules = [
   'data/projects.js',
   'scripts/docker-readiness.js',
   'scripts/dashboard/projects.js',
+  'scripts/dashboard/instances.js',
   'scripts/graph/launch.js',
   'scripts/graph/layout.js',
   'scripts/graph/selection.js',

@@ -8,9 +8,13 @@ function element() {
   return {
     children: [],
     classList: {
-      toggle() {},
-      contains() {
-        return false;
+      values: new Set(),
+      toggle(name, enabled) {
+        if (enabled) this.values.add(name);
+        else this.values.delete(name);
+      },
+      contains(name) {
+        return this.values.has(name);
       },
     },
     dataset: {},
@@ -165,4 +169,11 @@ test('project tooltip launches its own project and renders the app link', async 
   assert.equal(state.tooltipAppLink.href, 'http://127.0.0.1:49152');
   assert.equal(list.children.length, 1);
   assert.equal(node.attributes['aria-label'], 'JsonDesk: 1 instance up');
+  assert.equal(node.classList.contains('has-running-instance'), true);
+
+  state.onInstancesUpdate([
+    { projectId: 'example:JsonDesk', runtimeStatus: 'down' },
+  ]);
+  assert.equal(node.classList.contains('has-running-instance'), false);
+  assert.equal(node.classList.contains('has-stopped-instance'), true);
 });

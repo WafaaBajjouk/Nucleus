@@ -1,25 +1,25 @@
 <section
   class="instance-overview"
   id="instance-overview"
-  aria-labelledby="instances-title"
+  aria-labelledby="analysis-title"
 >
   <div class="instance-overview-heading">
     <div>
-      <div class="eyebrow">LIVE WORKSPACE</div>
-      <h2 id="instances-title">Instance overview</h2>
-      <p>Container state reported by Docker. Refreshes automatically.</p>
+      <div class="eyebrow">LIVE DOCKER DATA</div>
+      <h2 id="analysis-title">Analysis</h2>
+      <p>Running apps, health, CPU and memory reported by Docker.</p>
     </div>
     <span class="instance-refresh"
       ><span class="pulse-dot"></span>Auto refresh</span
     >
   </div>
   <div class="instance-summary" id="instance-summary" aria-live="polite">
-    <article class="instance-metric">
+    <article class="instance-metric up">
       <span class="metric-indicator up"></span>
       <span class="metric-label">Up</span>
       <strong id="instances-up">—</strong>
     </article>
-    <article class="instance-metric">
+    <article class="instance-metric down">
       <span class="metric-indicator down"></span>
       <span class="metric-label">Not up</span>
       <strong id="instances-down">—</strong>

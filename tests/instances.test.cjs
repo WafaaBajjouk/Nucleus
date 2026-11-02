@@ -51,9 +51,23 @@ async function fixture(t, behavior = {}) {
         };
       }
       if (args.includes('port')) return { stdout: `127.0.0.1:${nextPort++}\n` };
+      if (args[0] === 'stats')
+        return {
+          stdout: JSON.stringify({
+            ID: '0123456789ab',
+            CPUPerc: '2.5%',
+            MemUsage: '10MiB / 1GiB',
+          }),
+        };
       if (args.includes('ps'))
         return {
-          stdout: JSON.stringify([{ State: 'running', Health: 'healthy' }]),
+          stdout: JSON.stringify([
+            {
+              ID: '0123456789ab',
+              State: 'running',
+              Health: 'healthy',
+            },
+          ]),
         };
       return { stdout: '' };
     },
@@ -150,6 +164,10 @@ test('launch creates isolated Compose projects, ports, network and volume', asyn
   assert.equal(readyB.runtimeStatus, 'up');
   assert.notEqual(readyA.url, readyB.url);
   assert.equal(readyA.health, 'healthy');
+  assert.deepEqual(readyA.metrics, {
+    cpuPercent: 2.5,
+    memoryUsage: '10MiB / 1GiB',
+  });
 
   for (const launch of [a, b]) {
     const config = JSON.parse(

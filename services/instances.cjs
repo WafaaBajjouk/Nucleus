@@ -68,6 +68,10 @@ const containerState = (containers) => {
     return 'down';
   return 'unknown';
 };
+const parsePercent = (value) => {
+  const percent = Number.parseFloat(String(value).replace('%', ''));
+  return Number.isFinite(percent) ? percent : null;
+};
 
 function createInstances({ root = path.join(__dirname, '..'), run } = {}) {
   const dockerExecutable = findDockerExecutable();
@@ -335,6 +339,8 @@ function createInstances({ root = path.join(__dirname, '..'), run } = {}) {
           const record = await read(entry.name);
           let runtimeStatus = record.status === 'failed' ? 'failed' : 'unknown';
           let health = 'unknown';
+          let metrics = null;
+          let metricsMessage = 'Resource usage unavailable from Docker.';
           if (active.has(record.id)) {
             runtimeStatus = 'starting';
           } else {
@@ -372,6 +378,38 @@ function createInstances({ root = path.join(__dirname, '..'), run } = {}) {
                   /\((healthy|unhealthy|starting)\)/,
                 )?.[1] ||
                 'unknown';
+              const containerId = running?.ID || running?.Id;
+              if (
+                runtimeStatus === 'up' &&
+                /^[a-f0-9]{12,64}$/i.test(containerId || '')
+              ) {
+                try {
+                  const { stdout: statsOutput } = await runDocker(
+                    [
+                      'stats',
+                      '--no-stream',
+                      '--format',
+                      '{{json .}}',
+                      containerId,
+                    ],
+                    { ...options, timeout: 15000 },
+                  );
+                  const stats = parseContainers(statsOutput).find((item) =>
+                    String(item.ID || item.Container || '')
+                      .toLowerCase()
+                      .startsWith(containerId.slice(0, 12).toLowerCase()),
+                  );
+                  if (stats) {
+                    metrics = {
+                      cpuPercent: parsePercent(stats.CPUPerc),
+                      memoryUsage: String(stats.MemUsage || ''),
+                    };
+                    metricsMessage = null;
+                  }
+                } catch {
+                  metricsMessage = 'Docker could not provide resource usage.';
+                }
+              }
             } catch (error) {
               if (error.code !== 'ENOENT') runtimeStatus = 'unknown';
             }
@@ -390,6 +428,8 @@ function createInstances({ root = path.join(__dirname, '..'), run } = {}) {
             image: record.image,
             runtimeStatus,
             health,
+            metrics,
+            metricsMessage,
             message:
               runtimeStatus === 'unknown'
                 ? 'Docker status unavailable.'

@@ -84,7 +84,8 @@ test('dashboard renders a local catalogue without mock instances or activity', a
   assert.equal(result.status, 200);
   assert.match(result.body, /id="project-list"/);
   assert.match(result.body, /id="project-total"/);
-  assert.doesNotMatch(result.body, /id="docker-status"/);
+  assert.match(result.body, /id="analysis-title"/);
+  assert.match(result.body, /Running apps, health, CPU and memory/);
   assert.doesNotMatch(
     result.body,
     /Storefront|Atlas API|Pulse Analytics|CPU usage|Memory usage|Verification passed|Jamie Davis/,

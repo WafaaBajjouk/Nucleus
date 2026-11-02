@@ -24,6 +24,9 @@ export function initGraphLaunch(state) {
       const upCount = related.filter(
         (instance) => instance.runtimeStatus === 'up',
       ).length;
+      const downCount = related.filter((instance) =>
+        ['down', 'failed'].includes(instance.runtimeStatus),
+      ).length;
       const startingCount = related.filter(
         (instance) => instance.runtimeStatus === 'starting',
       ).length;
@@ -37,6 +40,10 @@ export function initGraphLaunch(state) {
         )
         .join('\n');
       node.classList.toggle('has-running-instance', upCount > 0);
+      node.classList.toggle(
+        'has-stopped-instance',
+        downCount > 0 && upCount === 0,
+      );
       let indicator = node.querySelector('.node-runtime');
       if (!indicator) {
         indicator = document.createElement('span');

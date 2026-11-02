@@ -24,6 +24,12 @@
   --node-blue: #1c2c46;
   --node-violet: #29233b;
   --node-amber: #322b22;
+  --status-up: #55d68b;
+  --status-down: #ff7777;
+  --status-starting: #e6b84f;
+  --status-unknown: #a4b1c6;
+  --metric-cpu: #70b7ff;
+  --metric-memory: #c39bff;
 }
 :root[data-theme='light'] {
   color-scheme: light;
@@ -42,6 +48,12 @@
   --node-blue: #e5eeff;
   --node-violet: #eee7fb;
   --node-amber: #faf0df;
+  --status-up: #167a49;
+  --status-down: #bb3030;
+  --status-starting: #8b5d18;
+  --status-unknown: #58677e;
+  --metric-cpu: #1768b1;
+  --metric-memory: #7046aa;
 }
 * {
   box-sizing: border-box;
@@ -308,6 +320,202 @@ h1 {
 .stat small {
   font-size: 10px;
   color: var(--muted);
+}
+.instance-overview {
+  margin-bottom: 36px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--surface);
+}
+.instance-overview-heading,
+.instance-row,
+.instance-details,
+.instance-badge {
+  display: flex;
+  align-items: center;
+}
+.instance-overview-heading,
+.instance-row {
+  justify-content: space-between;
+  gap: 14px;
+}
+.instance-overview-heading p,
+.instance-status {
+  margin: 7px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.7;
+}
+.instance-refresh,
+.instance-legend,
+.instance-badge,
+.instance-resource-metrics {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.instance-refresh,
+.instance-legend,
+.instance-badge {
+  color: var(--muted);
+  font-size: 10px;
+}
+.instance-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 10px;
+  margin-top: 20px;
+}
+.instance-metric {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.instance-metric.up strong,
+.instance-metric.up .metric-indicator,
+.instance-badge.up {
+  color: var(--status-up);
+}
+.instance-metric.down strong,
+.instance-metric.down .metric-indicator,
+.instance-badge.down,
+.instance-badge.failed {
+  color: var(--status-down);
+}
+.metric-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.metric-label {
+  color: var(--muted);
+  font-size: 10px;
+}
+.instance-metric strong {
+  font-size: 20px;
+}
+.instance-chart {
+  display: flex;
+  overflow: hidden;
+  height: 7px;
+  margin-top: 16px;
+  border-radius: 8px;
+  background: var(--surface-raised);
+}
+.chart-segment.up,
+.instance-dot.up {
+  background: var(--status-up);
+}
+.chart-segment.down,
+.instance-dot.down,
+.instance-dot.failed {
+  background: var(--status-down);
+}
+.chart-segment.starting,
+.instance-dot.starting {
+  background: var(--status-starting);
+}
+.chart-segment.unknown,
+.instance-dot.unknown {
+  background: var(--status-unknown);
+}
+.instance-legend {
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+.legend-dot,
+.instance-dot,
+.pulse-dot {
+  display: inline-block;
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.instance-list {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.instance-row {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.instance-details {
+  min-width: 0;
+  flex: 1;
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 5px;
+  overflow-wrap: anywhere;
+}
+.instance-details strong {
+  font-size: 11px;
+}
+.instance-details > span,
+.instance-message {
+  color: var(--muted);
+  font-size: 10px;
+}
+.instance-resource-metrics {
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+.instance-resource-metrics span {
+  padding: 4px 7px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  color: var(--muted);
+  font-size: 10px;
+}
+.instance-resource-metrics span:first-child {
+  color: var(--metric-cpu);
+  background: color-mix(in srgb, var(--metric-cpu) 10%, var(--surface));
+}
+.instance-resource-metrics span:nth-child(2) {
+  color: var(--metric-memory);
+  background: color-mix(in srgb, var(--metric-memory) 10%, var(--surface));
+}
+.instance-badge {
+  flex-wrap: wrap;
+}
+.instance-health {
+  color: var(--muted);
+}
+.instance-open,
+.instance-remove {
+  flex: 0 0 auto;
+  color: var(--accent);
+  font-size: 10px;
+}
+.instance-remove {
+  padding: 6px 9px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+.instance-status {
+  margin-top: 12px;
+}
+.docker-readiness {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.docker-readiness .instance-status {
+  flex: 1;
 }
 .section-heading {
   display: flex;
@@ -852,6 +1060,14 @@ code {
 .project-node:nth-of-type(3n + 3) {
   border-color: var(--line);
   background: var(--node-amber);
+}
+.project-node.has-running-instance {
+  border-color: var(--status-up);
+  background: color-mix(in srgb, var(--status-up) 14%, var(--surface));
+}
+.project-node.has-stopped-instance {
+  border-color: var(--status-down);
+  background: color-mix(in srgb, var(--status-down) 12%, var(--surface));
 }
 
 .graph-legend span:first-child i {

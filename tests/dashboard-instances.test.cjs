@@ -43,6 +43,7 @@ test('overview renders running and not-up totals, distribution and real instance
       runtimeStatus: 'up',
       image: 'nucleus-tasknest',
       health: 'healthy',
+      metrics: { cpuPercent: 2.5, memoryUsage: '10MiB / 1GiB' },
       message: 'Application passed its health check.',
       url: 'http://127.0.0.1:45001',
     },
@@ -106,6 +107,14 @@ test('overview renders running and not-up totals, distribution and real instance
   assert.equal(
     nodes['#instance-list'].children[0].children[0].className,
     'instance-dot up',
+  );
+  const firstDetails = nodes['#instance-list'].children[0].children[1];
+  const metrics = firstDetails.children.find(
+    (child) => child.className === 'instance-resource-metrics',
+  );
+  assert.deepEqual(
+    metrics.children.map((metric) => metric.textContent),
+    ['CPU 2.5%', 'Memory 10MiB / 1GiB'],
   );
   assert.ok(
     nodes['#instance-list'].children[0].children.some((child) =>

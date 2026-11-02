@@ -6,7 +6,7 @@ A **self-hosted project catalogue**. Admins register containerised projects; use
 
 ## Use Cases
 
-Current implementation: the dashboard and graph list real projects from `examples/`. Select a project in the graph to launch it with Docker Compose; detailed monitoring, verification, and user permissions remain planned.
+Current implementation: the dashboard and graph list real projects from `examples/`. Select a project in the graph to launch it with Docker Compose. The dashboard's Analysis section shows running apps, health, and Docker-reported CPU and memory; broader monitoring, verification, and user permissions remain planned.
 
 For a clean local evaluation with the two included projects, see [EVALUATION.md](EVALUATION.md).
 

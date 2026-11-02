@@ -86,6 +86,27 @@ export function initInstanceOverview() {
           : 'Launch time unavailable';
         meta.textContent = `${instance.image || 'Container image'} · ${date}`;
         details.append(name, meta);
+        if (instance.runtimeStatus === 'up') {
+          const metrics = document.createElement('div');
+          metrics.className = 'instance-resource-metrics';
+          const cpu = document.createElement('span');
+          cpu.textContent =
+            instance.metrics?.cpuPercent == null
+              ? 'CPU unavailable'
+              : `CPU ${instance.metrics.cpuPercent.toFixed(1)}%`;
+          const memory = document.createElement('span');
+          memory.textContent = instance.metrics?.memoryUsage
+            ? `Memory ${instance.metrics.memoryUsage}`
+            : 'Memory unavailable';
+          metrics.append(cpu, memory);
+          details.append(metrics);
+          if (instance.metricsMessage) {
+            const note = document.createElement('small');
+            note.className = 'instance-message';
+            note.textContent = instance.metricsMessage;
+            details.append(note);
+          }
+        }
         if (instance.message) {
           const message = document.createElement('small');
           message.className = 'instance-message';
