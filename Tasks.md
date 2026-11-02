@@ -2,19 +2,19 @@
 
 Nucleus aims to automate local deployment for developers in companies and teams. Developers select a project from an interactive graph and launch it in an isolated Docker Compose environment, reducing manual setup.
 
-## Software Development Lifecycle
+## Current State
 
-Nucleus follows a proposed **incremental and iterative lifecycle**: deliver usable capabilities in stages and improve them through testing and feedback.
+The catalogue, graph, Compose launch, launch health check, instance listing/status and deletion are implemented. Multi-user permissions and ongoing monitoring and verification are not.
 
-While working in this project , I act as the developer, tester, client and project owner...
+## Proposed Software Development Lifecycle
 
-1. **Define requirements:** "With my client hat on, I define the expected behaviour": an authorised developer can select a supported project from the graph, launch it and access the application.
-2. **Design and build:** "With my developer hat on, I implement a usable increment": first a complete launch workflow, including validation, isolation and failure cleanup; later, instance controls, monitoring and verification.
-3. **Test and revise:** "With my tester hat on, I check functionality, permissions and failure handling" and record the results.
-4. **Deploy and operate:** "With my developer hat on, I release a tested version" and verify its behaviour on a compatible Docker Compose host.
-5. **Review feedback and maintain:** "With my client hat on, I assess whether the workflow reduces manual setup. With my project owner hat on, I use that evidence to keep, change or stop planned work. With my developer hat on, I implement the agreed improvements."
+I will use an **iterative and incremental lifecycle**, defining, implementing and testing each usable capability before using evidence and feedback to plan the next step.
 
-**Current state**:
+### Planned Increments
 
-Currently, the dashboard and graph read actual project folders from examples/ by default. Mock instances, metrics and activity have been removed.
-Docker Compose launching, instance controls, monitoring and verification are not yet implemented
+1. **Add instance controls and permissions:** Start, stop and restart instances, with access limited to authorised users. Complete when permitted actions work and instance states update correctly.
+2. **Add monitoring and verification:** Show instance logs and run health and acceptance checks. Complete when results reflect real instances and are clearly reported.
+
+### Planned Testing and Feedback
+
+After each increment, I will test its expected behaviour, permissions and error handling, and record results. I will compare the steps and time for manual and Nucleus setup under comparable conditions, then use test results and user feedback to decide what to improve. These evaluations are planned
