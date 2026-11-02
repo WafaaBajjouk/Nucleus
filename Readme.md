@@ -4,28 +4,32 @@
 
 A **self-hosted project catalogue**. Admins register containerised projects; users launch selected versions in isolated Docker Compose environments. The host needs Docker with Compose running and compatible container images.
 
-## Use Cases
 
-Current implementation: the dashboard and graph list real projects from `examples/`. Select a project in the graph to launch it with Docker Compose. The dashboard's Analysis section shows running apps, health, and Docker-reported CPU and memory; broader monitoring, verification, and user permissions remain planned.
+## Run locally
 
-For a clean local evaluation with the two included projects, see [EVALUATION.md](EVALUATION.md).
+Requirements: Node.js 22.5+. Git is needed to import repositories. Docker with
+Compose v2 is needed to launch apps.
 
-| Actor | Use cases |
-|---|---|
-| Admin | Register projects; configure images, dependencies, settings and checks; test and publish versions; archive projects; manage users, teams, ACLs and quotas. |
-| User | Browse authorised projects; select a version; launch instances; open applications; start, stop, restart and delete owned instances; run verification. |
-| Both | Monitor authorised instances: state, health, CPU/RAM, logs, deployment history and acceptance results. |
-| System | Validate configuration; allocate ports; create networks and volumes; collect metrics; execute checks; record audit events; clean up failed deployments. |
+```sh
+npm install
+npm start
+```
 
-**Access control:** RBAC defines admin/user roles. Project ACLs grant users or teams `view` and `launch`; instance ACLs grant `view`, `operate`, `verify` and `delete`. The backend checks permissions on every request. Data deletion is explicit.
+## How it works
 
 ```mermaid
 flowchart LR
-    A["Admin"] --> C["Configure Projects<br/>Versions · ACLs · Checks"]
-    C --> CAT["Project Catalogue"]
-    U["User"] --> CAT
-    CAT --> L["Launch Isolated Instance"]
-    L --> D["Dashboard<br/>Health · Resources · Logs · Results"]
-    A --> D
-    U --> D
+    Browser["Dashboard and graph"] <-->|"HTTP API"| Nucleus["Nucleus server"]
+    GitHub["Public GitHub"] -->|"Git clone"| Nucleus
+    Nucleus --> Examples["Bundled examples and imported projects"]
+    Nucleus -->|"Validate and launch"| Docker["Docker Compose"]
+    Docker --> App["Running app"]
+    Docker -->|"Instance status and resource usage"| Nucleus
 ```
+
+Imported repositories need a supported root Compose file. Review repository
+code before launching it; Nucleus rejects configurations outside its safety
+checks. The dashboard reports Docker-provided instance status, health, CPU and
+memory. No account is required.
+
+Run checks with `npm test` and `npm run test:examples`.
