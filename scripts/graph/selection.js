@@ -11,7 +11,7 @@ export function initGraphSelection(state) {
       state.details.textContent = 'No projects available.';
       return;
     }
-    state.details.textContent = `${project.name} · ${project.version} · Demo workspace. ${project.description} ${project.composeFile ? `Compose: ${project.composeFile}.` : 'No Compose file found.'} Launching from the graph is not connected yet.`;
+    state.details.textContent = `${project.name} · ${project.version} · Demo workspace. ${project.description} ${project.composeFile ? `Compose: ${project.composeFile}.` : 'No Compose file found.'}`;
   }
   return { selectProject };
 }

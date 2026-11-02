@@ -1,0 +1,66 @@
+<section
+  class="instance-overview"
+  id="instance-overview"
+  aria-labelledby="instances-title"
+>
+  <div class="instance-overview-heading">
+    <div>
+      <div class="eyebrow">LIVE WORKSPACE</div>
+      <h2 id="instances-title">Instance overview</h2>
+      <p>Container state reported by Docker. Refreshes automatically.</p>
+    </div>
+    <span class="instance-refresh"
+      ><span class="pulse-dot"></span>Auto refresh</span
+    >
+  </div>
+  <div class="instance-summary" id="instance-summary" aria-live="polite">
+    <article class="instance-metric">
+      <span class="metric-indicator up"></span>
+      <span class="metric-label">Up</span>
+      <strong id="instances-up">—</strong>
+    </article>
+    <article class="instance-metric">
+      <span class="metric-indicator down"></span>
+      <span class="metric-label">Not up</span>
+      <strong id="instances-down">—</strong>
+    </article>
+    <article class="instance-metric">
+      <span class="metric-indicator unknown"></span>
+      <span class="metric-label">Unknown</span>
+      <strong id="instances-unknown">—</strong>
+    </article>
+    <article class="instance-metric">
+      <span class="metric-indicator starting"></span>
+      <span class="metric-label">Starting</span>
+      <strong id="instances-starting">—</strong>
+    </article>
+    <article class="instance-metric total">
+      <span class="metric-label">Total instances</span>
+      <strong id="instances-total">—</strong>
+    </article>
+  </div>
+  <div
+    class="instance-chart"
+    id="instance-chart"
+    role="img"
+    aria-label="Instance status distribution"
+  ></div>
+  <div class="instance-legend" aria-hidden="true">
+    <span><i class="legend-dot up"></i>Up</span>
+    <span><i class="legend-dot down"></i>Not up</span>
+    <span><i class="legend-dot starting"></i>Starting</span>
+    <span><i class="legend-dot unknown"></i>Unknown</span>
+  </div>
+  <p class="instance-status" id="instance-status" role="status">
+    Loading instance status…
+  </p>
+  <div class="docker-readiness">
+    <p class="instance-status" id="docker-status" role="status">
+      Checking Docker and Compose…
+    </p>
+    <button class="button" id="docker-check" type="button" disabled>
+      Check again
+    </button>
+  </div>
+  <ul class="instance-list" id="instance-list" aria-busy="true"></ul>
+</section>

@@ -6,17 +6,23 @@
   <div class="section-heading">
     <div>
       <h2 id="projects-title">Project graph</h2>
-      <p>Demo workspace projects are shown by default.</p>
     </div>
     <span class="subtle-label" id="graph-status" role="status"
       >Loading demo workspace…</span
     >
   </div>
   <p class="graph-help" id="graph-help">
-    Drag nodes with a mouse or touch. Select a project to see its details. Use
-    Tab to focus nodes and see details; use arrow keys to move them. Scroll the
-    canvas on smaller screens.
+    Select a project to see its details and launch it. Drag nodes with a mouse
+    or touch; use Tab to focus nodes and arrow keys to move them.
   </p>
+  <div class="docker-readiness">
+    <p class="instance-status" id="docker-status" role="status">
+      Checking Docker and Compose…
+    </p>
+    <button class="button" id="docker-check" type="button" disabled>
+      Check again
+    </button>
+  </div>
   <div
     class="graph-scroll"
     tabindex="0"
@@ -39,4 +45,8 @@
     <span><i aria-hidden="true"></i>Selected project</span>
   </div>
   <p class="graph-details" id="graph-details" aria-live="polite"></p>
+  <section class="graph-instances" aria-labelledby="graph-instances-title">
+    <h3 id="graph-instances-title">Selected project instances</h3>
+    <ul class="instance-list" id="graph-instance-list"></ul>
+  </section>
 </section>

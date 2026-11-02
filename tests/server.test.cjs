@@ -17,6 +17,17 @@ function createHandler() {
         };
       if (name === './services/examples.cjs')
         return require('../services/examples.cjs');
+      if (name === './services/instances.cjs')
+        return {
+          createInstances: () => ({
+            engineStatus: async () => ({ ready: true }),
+            list: async () => [],
+            launch: async () => ({ id: 'nucleus-test', status: 'starting' }),
+            remove: async () => {},
+          }),
+        };
+      if (name === './services/instance-api.cjs')
+        return require('../services/instance-api.cjs');
       return require(name);
     },
     process: { env: {} },
@@ -34,7 +45,7 @@ function createHandler() {
 async function request(handler, url = '/api/examples', json = true) {
   const result = { headers: {} };
   await handler(
-    { method: 'GET', url },
+    { method: 'GET', url, headers: { host: 'localhost:8000' } },
     {
       setHeader(key, value) {
         result.headers[key] = value;
@@ -73,6 +84,7 @@ test('dashboard renders a local catalogue without mock instances or activity', a
   assert.equal(result.status, 200);
   assert.match(result.body, /id="project-list"/);
   assert.match(result.body, /id="project-total"/);
+  assert.doesNotMatch(result.body, /id="docker-status"/);
   assert.doesNotMatch(
     result.body,
     /Storefront|Atlas API|Pulse Analytics|CPU usage|Memory usage|Verification passed|Jamie Davis/,
@@ -84,6 +96,8 @@ test('graph renders the demo workspace without a remote connection form', async 
   const result = await request(createHandler(), '/graph.html', false);
   assert.equal(result.status, 200);
   assert.match(result.body, /Demo workspace/);
+  assert.match(result.body, /id="docker-status"/);
+  assert.match(result.body, /id="graph-instance-list"/);
   assert.doesNotMatch(result.body, /github|username|token/i);
 });
 

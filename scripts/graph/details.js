@@ -2,19 +2,58 @@ export function initNodeDetails(state) {
   const tooltip = document.createElement('div');
   tooltip.id = 'node-details';
   tooltip.className = 'node-details';
-  tooltip.setAttribute('role', 'tooltip');
+  tooltip.setAttribute('role', 'group');
+  tooltip.setAttribute('aria-label', 'Project details and launch');
   tooltip.hidden = true;
   document.body.append(tooltip);
+  state.tooltip = tooltip;
+  const launch = document.createElement('button');
+  launch.className = 'button primary';
+  launch.type = 'button';
+  launch.textContent = 'Launch project';
+  launch.disabled = true;
+  const status = document.createElement('span');
+  status.setAttribute('role', 'status');
+  const appLink = document.createElement('a');
+  appLink.className = 'instance-open';
+  appLink.target = '_blank';
+  appLink.rel = 'noopener noreferrer';
+  appLink.textContent = 'Open app ↗';
+  appLink.hidden = true;
+  const actions = document.createElement('div');
+  actions.className = 'node-details-actions';
+  actions.append(launch, status, appLink);
+  state.tooltipLaunch = launch;
+  state.tooltipLaunchStatus = status;
+  state.tooltipAppLink = appLink;
+  state.tooltipProject = null;
   let activeNode = null;
+  let hideTimer;
 
   function hide() {
+    clearTimeout(hideTimer);
     activeNode?.removeAttribute('aria-describedby');
+    activeNode?.setAttribute('aria-expanded', 'false');
     activeNode = null;
     tooltip.hidden = true;
+    state.tooltipProject = null;
+    state.onTooltipProjectChange?.(null);
+  }
+
+  function scheduleHide() {
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(() => {
+      if (
+        document.activeElement !== activeNode &&
+        !tooltip.contains(document.activeElement)
+      )
+        hide();
+    }, 180);
   }
 
   function show(node) {
     if (!node || node.classList.contains('dragging')) return;
+    clearTimeout(hideTimer);
     hide();
     const project = state.projects.find(
       (item) => item.id === node.dataset.project,
@@ -27,19 +66,28 @@ export function initNodeDetails(state) {
       metadata.textContent = `Version ${project.version} · Demo workspace`;
       description.textContent =
         project.description || 'No description provided.';
+      state.tooltipProject = project;
+      state.onTooltipProjectChange?.(project);
+      tooltip.replaceChildren(heading, metadata, description, actions);
     } else if (node === state.workspace) {
       heading.textContent = node.querySelector('strong').textContent;
       metadata.textContent = `${state.projects.length} projects`;
       description.textContent =
         'Select a project to explore its details. Drag nodes to arrange your workspace.';
+      state.tooltipProject = null;
+      state.onTooltipProjectChange?.(null);
+      tooltip.replaceChildren(heading, metadata, description);
     } else {
       heading.textContent = node.textContent;
       metadata.textContent = 'Project service';
       description.textContent = state.selectedProject?.name || '';
+      state.tooltipProject = null;
+      state.onTooltipProjectChange?.(null);
+      tooltip.replaceChildren(heading, metadata, description);
     }
-    tooltip.replaceChildren(heading, metadata, description);
     activeNode = node;
     node.setAttribute('aria-describedby', tooltip.id);
+    node.setAttribute('aria-expanded', 'true');
     tooltip.hidden = false;
     const rect = node.getBoundingClientRect();
     const margin = 12;
@@ -61,7 +109,16 @@ export function initNodeDetails(state) {
   state.graph.addEventListener('focusin', (event) =>
     show(event.target.closest('.graph-node')),
   );
-  state.graph.addEventListener('focusout', hide);
+  state.graph.addEventListener('focusout', (event) => {
+    if (!tooltip.contains(event.relatedTarget)) hide();
+  });
+  tooltip.addEventListener('focusout', (event) => {
+    if (
+      !tooltip.contains(event.relatedTarget) &&
+      !activeNode?.contains(event.relatedTarget)
+    )
+      hide();
+  });
   state.graph.addEventListener('pointerover', (event) => {
     if (event.pointerType === 'touch') return;
     const node = event.target.closest('.graph-node');
@@ -74,11 +131,10 @@ export function initNodeDetails(state) {
       tooltip.contains(event.relatedTarget)
     )
       return;
-    if (document.activeElement !== activeNode) hide();
+    scheduleHide();
   });
-  tooltip.addEventListener('pointerleave', () => {
-    if (document.activeElement !== activeNode) hide();
-  });
+  tooltip.addEventListener('pointerenter', () => clearTimeout(hideTimer));
+  tooltip.addEventListener('pointerleave', scheduleHide);
   state.graph.addEventListener('pointermove', (event) => {
     if (event.buttons) hide();
   });
@@ -88,7 +144,6 @@ export function initNodeDetails(state) {
   state.graph.parentElement.addEventListener('scroll', hide);
   window.addEventListener('scroll', hide);
   window.addEventListener('resize', hide);
-  // Imports replace nodes; never leave details for a removed project visible.
   new MutationObserver(() => {
     if (activeNode && !activeNode.isConnected) hide();
   }).observe(state.graph, { childList: true, subtree: true });

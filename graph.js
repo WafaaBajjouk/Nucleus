@@ -3,6 +3,8 @@ import { initGraphInteractions } from './scripts/graph/interactions.js';
 import { initGraphToolbar } from './scripts/graph/toolbar.js';
 import { initGraphImport } from './scripts/graph/import.js';
 import { initNodeDetails } from './scripts/graph/details.js';
+import { initGraphLaunch } from './scripts/graph/launch.js';
+import { initDockerReadiness } from './scripts/docker-readiness.js';
 
 const graph = document.querySelector('#project-graph');
 const state = {
@@ -17,4 +19,6 @@ const selection = initGraphSelection(state);
 initGraphInteractions(state, selection);
 initGraphToolbar(state);
 initNodeDetails(state);
+initGraphLaunch(state);
+initDockerReadiness((readiness) => state.onDockerReadinessChange?.(readiness));
 initGraphImport(state, selection);

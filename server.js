@@ -2,6 +2,9 @@ const http = require('node:http');
 const { readFile } = require('node:fs/promises');
 const path = require('node:path');
 const { listExamples } = require('./services/examples.cjs');
+const { createInstances } = require('./services/instances.cjs');
+const { instanceApi } = require('./services/instance-api.cjs');
+const instances = createInstances();
 
 // Serve only the dashboard assets, keeping repository files private.
 const routes = {
@@ -17,7 +20,9 @@ const routes = {
 // Explicit public browser modules; internal server files stay private.
 const browserModules = [
   'data/projects.js',
+  'scripts/docker-readiness.js',
   'scripts/dashboard/projects.js',
+  'scripts/graph/launch.js',
   'scripts/graph/layout.js',
   'scripts/graph/selection.js',
   'scripts/graph/interactions.js',
@@ -38,6 +43,7 @@ const sections = new Set([
   'stats',
   'projects',
   'footer',
+  'instances',
   'graph-toolbar',
   'graph-canvas',
 ]);
@@ -58,6 +64,7 @@ async function renderPage(filename) {
 }
 
 const server = http.createServer(async (request, response) => {
+  if (await instanceApi(request, response, instances)) return;
   if (request.method !== 'GET' && request.method !== 'HEAD') {
     response.writeHead(405, { Allow: 'GET, HEAD' });
     response.end('Method not allowed');

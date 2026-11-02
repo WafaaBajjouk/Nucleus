@@ -675,6 +675,29 @@ code {
   color: var(--muted);
   line-height: 1.7;
 }
+.node-details-actions {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+  margin-top: 14px;
+}
+.node-details-actions > span {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.6;
+}
+.node-details-actions [hidden] {
+  display: none;
+}
+.docker-readiness {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.docker-readiness .instance-status {
+  flex: 1;
+}
 @media (max-width: 1000px) {
   .sidebar {
     width: 205px;
