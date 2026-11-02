@@ -1,0 +1,41 @@
+<section class="add-project-page" aria-labelledby="add-project-title">
+  <div class="page-heading">
+    <div>
+      <div class="eyebrow">PROJECT CATALOGUE</div>
+      <h1 id="add-project-title">Add a project</h1>
+      <p>
+        Import a public GitHub repository into this local Nucleus workspace.
+      </p>
+    </div>
+    <a class="button" href="./">← Back to projects</a>
+  </div>
+  <form class="repository-form" id="repository-form">
+    <label for="repository-url">Public GitHub repository URL</label>
+    <div>
+      <input
+        id="repository-url"
+        name="url"
+        type="url"
+        placeholder="https://github.com/owner/repository"
+        pattern="https://github\.com/[^/]+/[^/]+/?"
+        maxlength="300"
+        autocomplete="url"
+        required
+      />
+      <button class="button primary" type="submit">Add repository</button>
+    </div>
+    <small
+      >Public GitHub repositories only. No token is needed. Git must be
+      installed. The repository source is stored locally.</small
+    >
+    <p class="project-status" id="repository-status" role="status"></p>
+    <a class="button" id="repository-graph-link" href="graph.html" hidden
+      >View project graph →</a
+    >
+  </form>
+  <p class="add-project-note">
+    Repositories with a Compose file can be launched if their configuration
+    passes Nucleus checks. Launching runs repository code in Docker; review it
+    before starting. Bundled demo projects remain available.
+  </p>
+</section>

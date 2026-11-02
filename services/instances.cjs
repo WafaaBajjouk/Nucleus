@@ -13,9 +13,40 @@ const supported = {
   JsonDesk: { port: 3002, variable: 'JSONDESK_PORT' },
   TextScope: { port: 3003, variable: 'TEXTSCOPE_PORT' },
 };
+const unsupportedServiceOptions = [
+  'cap_add',
+  'cgroup',
+  'configs',
+  'container_name',
+  'device_cgroup_rules',
+  'devices',
+  'extends',
+  'external_links',
+  'ipc',
+  'links',
+  'network_mode',
+  'pid',
+  'privileged',
+  'runtime',
+  'secrets',
+  'security_opt',
+  'sysctls',
+  'userns_mode',
+  'uts',
+  'volumes_from',
+];
 const validId = /^nucleus-[a-f0-9-]{36}$/;
 const failure = (message, status = 400) =>
   Object.assign(Error(message), { status });
+const isWithin = (parent, child) => {
+  const relative = path.relative(parent, child);
+  return (
+    relative === '' ||
+    (relative !== '..' &&
+      !relative.startsWith(`..${path.sep}`) &&
+      !path.isAbsolute(relative))
+  );
+};
 function findDockerExecutable({
   pathValue = process.env.PATH || '',
   home = os.homedir(),
@@ -72,6 +103,95 @@ const parsePercent = (value) => {
   const percent = Number.parseFloat(String(value).replace('%', ''));
   return Number.isFinite(percent) ? percent : null;
 };
+
+async function validateComposeConfig(config, instanceId, source, expectedPort) {
+  const reject = () =>
+    failure(
+      'Unsupported Compose configuration. Nucleus supports one isolated app service with a single TCP port and no host access.',
+    );
+  const serviceNames = Object.keys(config.services || {});
+  const service = config.services?.app;
+  const ports = service?.ports;
+  if (
+    serviceNames.length !== 1 ||
+    serviceNames[0] !== 'app' ||
+    !service ||
+    typeof service !== 'object' ||
+    !Array.isArray(ports) ||
+    ports.length !== 1 ||
+    unsupportedServiceOptions.some(
+      (key) => service[key] !== undefined && service[key] !== null,
+    ) ||
+    (service.volumes !== undefined &&
+      (!Array.isArray(service.volumes) ||
+        service.volumes.some((volume) => volume.type !== 'volume'))) ||
+    (config.secrets && Object.keys(config.secrets).length) ||
+    (config.configs && Object.keys(config.configs).length)
+  )
+    throw reject();
+
+  const port = ports[0];
+  const target = Number(port.target);
+  if (
+    !Number.isInteger(target) ||
+    target < 1 ||
+    target > 65535 ||
+    (expectedPort !== null && target !== expectedPort) ||
+    (port.protocol && port.protocol !== 'tcp') ||
+    (port.mode && port.mode !== 'ingress')
+  )
+    throw reject();
+
+  if (!service.image && !service.build) throw reject();
+  if (service.build) {
+    const build =
+      typeof service.build === 'string'
+        ? { context: service.build }
+        : service.build;
+    if (
+      !build.context ||
+      build.additional_contexts ||
+      build.privileged ||
+      build.secrets ||
+      build.ssh ||
+      build.entitlements ||
+      build.extra_hosts ||
+      build.network === 'host'
+    )
+      throw reject();
+    const context = path.resolve(source, build.context);
+    const contextReal = await fs.realpath(context);
+    if (!isWithin(source, contextReal)) throw reject();
+    if (build.dockerfile) {
+      const dockerfileReal = await fs.realpath(
+        path.resolve(contextReal, build.dockerfile),
+      );
+      if (!isWithin(source, dockerfileReal)) throw reject();
+    }
+  }
+
+  for (const volume of Object.values(config.volumes || {})) {
+    if (
+      volume.external ||
+      volume.driver_opts ||
+      !volume.name?.startsWith(`${instanceId}_`)
+    )
+      throw reject();
+  }
+  for (const network of Object.values(config.networks || {})) {
+    if (
+      network.external ||
+      network.driver_opts ||
+      !['bridge', undefined].includes(network.driver) ||
+      !network.name?.startsWith(`${instanceId}_`)
+    )
+      throw reject();
+  }
+
+  port.host_ip = '127.0.0.1';
+  port.published = '0';
+  return service;
+}
 
 function createInstances({ root = path.join(__dirname, '..'), run } = {}) {
   const dockerExecutable = findDockerExecutable();
@@ -143,16 +263,24 @@ function createInstances({ root = path.join(__dirname, '..'), run } = {}) {
   async function deploy(record, project) {
     let deploymentStarted = false;
     let stage = 'Docker engine';
-    const source = path.join(root, 'examples', project.name);
+    const source = project.sourceDirectory;
     const composeSource = path.join(source, project.composeFile);
     const composeFile = path.join(location(record.id), 'compose.json');
-    const app = supported[project.name];
     try {
+      const sourceReal = await fs.realpath(source);
+      const rootReal = await fs.realpath(root);
+      const projectRoot = project.imported
+        ? await fs.realpath(path.join(root, '.nucleus', 'projects'))
+        : await fs.realpath(path.join(root, 'examples'));
+      const composeReal = await fs.realpath(composeSource);
       if (
-        (await fs.realpath(source)) !==
-        path.join(await fs.realpath(root), 'examples', project.name)
+        !isWithin(rootReal, sourceReal) ||
+        !isWithin(projectRoot, sourceReal) ||
+        !isWithin(sourceReal, composeReal)
       )
-        throw failure('Linked project directories are not supported.');
+        throw failure(
+          'Linked project files outside the project are not supported.',
+        );
 
       const readiness = await engineStatus();
       if (!readiness.ready) throw failure(readiness.message, 503);
@@ -170,36 +298,19 @@ function createInstances({ root = path.join(__dirname, '..'), run } = {}) {
         ],
         {
           ...options,
-          cwd: source,
-          env: { ...process.env, [app.variable]: '0' },
+          cwd: sourceReal,
+          env: project.variable
+            ? { ...process.env, [project.variable]: '0' }
+            : process.env,
         },
       );
       const config = JSON.parse(stdout);
-      const service = config.services?.app;
-      const ports = service?.ports;
-      if (
-        Object.keys(config.services || {}).length !== 1 ||
-        !Array.isArray(ports) ||
-        ports.length !== 1 ||
-        ports[0].host_ip !== '127.0.0.1' ||
-        Number(ports[0].target) !== app.port ||
-        Number(ports[0].published) !== 0 ||
-        service.container_name ||
-        service.privileged ||
-        service.network_mode ||
-        service.volumes?.some((volume) => volume.type !== 'volume') ||
-        Object.values(config.volumes || {}).some(
-          (volume) =>
-            volume.external || !volume.name?.startsWith(`${record.id}_`),
-        ) ||
-        Object.values(config.networks || {}).some(
-          (network) =>
-            network.external || !network.name?.startsWith(`${record.id}_`),
-        )
-      )
-        throw failure(
-          'Unsupported Compose configuration. Only isolated bundled projects can be launched.',
-        );
+      const service = await validateComposeConfig(
+        config,
+        record.id,
+        sourceReal,
+        project.port,
+      );
 
       await fs.writeFile(composeFile, JSON.stringify(config));
       record.image = service.image || `${record.id}-app`;
@@ -218,7 +329,13 @@ function createInstances({ root = path.join(__dirname, '..'), run } = {}) {
         options,
       );
       const { stdout: portOutput } = await runDocker(
-        compose(record.id, composeFile, 'port', 'app', String(app.port)),
+        compose(
+          record.id,
+          composeFile,
+          'port',
+          'app',
+          String(project.port || service.ports[0].target),
+        ),
         { ...options, timeout: 15000 },
       );
       const match = portOutput.trim().match(/^127\.0\.0\.1:(\d+)$/);
@@ -227,7 +344,7 @@ function createInstances({ root = path.join(__dirname, '..'), run } = {}) {
 
       record.status = 'ready';
       record.url = `http://127.0.0.1:${match[1]}`;
-      record.message = 'Application passed its health check.';
+      record.message = 'Application started successfully.';
     } catch (error) {
       record.status = 'failed';
       record.message =
@@ -274,31 +391,52 @@ function createInstances({ root = path.join(__dirname, '..'), run } = {}) {
   }
 
   async function launch(projectId) {
-    const name =
-      typeof projectId === 'string' && projectId.startsWith('example:')
-        ? projectId.slice('example:'.length)
-        : '';
-    if (!Object.hasOwn(supported, name))
+    let project;
+    let name;
+    if (typeof projectId === 'string' && projectId.startsWith('example:')) {
+      name = projectId.slice('example:'.length);
+      if (!Object.hasOwn(supported, name))
+        throw failure('Select a supported project.');
+      const { listExamples } = require('../models/example-catalogue.cjs');
+      const example = (await listExamples(path.join(root, 'examples'))).find(
+        (item) => item.id === projectId && item.composeFile,
+      );
+      if (!example)
+        throw failure('Project does not have a supported Compose file.');
+      project = {
+        ...example,
+        sourceDirectory: path.join(root, 'examples', name),
+        port: supported[name].port,
+        variable: supported[name].variable,
+      };
+    } else if (
+      typeof projectId === 'string' &&
+      /^repository:[a-f0-9-]{36}$/.test(projectId)
+    ) {
+      const {
+        listPublicRepositories,
+      } = require('../models/public-repository-catalogue.cjs');
+      const imported = (await listPublicRepositories(root)).find(
+        (item) => item.id === projectId && item.composeFile,
+      );
+      if (!imported)
+        throw failure('Project does not have a supported Compose file.');
+      name = imported.name;
+      project = {
+        ...imported,
+        sourceDirectory: path.join(root, imported.directory),
+        imported: true,
+        port: null,
+      };
+    } else {
       throw failure('Select a supported project.');
+    }
+
     if (active.size >= 2)
       throw failure(
         'Two builds are already in progress. Wait before launching another.',
         409,
       );
-
-    const { listExamples } = require('../models/example-catalogue.cjs');
-    const projects = await listExamples(path.join(root, 'examples'));
-    const project = projects.find(
-      (item) => item.id === projectId && item.composeFile,
-    );
-    if (!project)
-      throw failure('Project does not have a supported Compose file.');
-    if (active.size >= 2)
-      throw failure(
-        'Two builds are already in progress. Wait before launching another.',
-        409,
-      );
-
     const record = {
       id: `nucleus-${randomUUID()}`,
       projectId,

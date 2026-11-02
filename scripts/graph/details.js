@@ -63,7 +63,10 @@ export function initNodeDetails(state) {
     const description = document.createElement('p');
     if (project) {
       heading.textContent = project.name;
-      metadata.textContent = `Version ${project.version} · Demo workspace`;
+      metadata.textContent =
+        project.source === 'github'
+          ? `GitHub · ${project.owner}/${project.name}`
+          : `Version ${project.version} · Bundled demo`;
       description.textContent =
         project.description || 'No description provided.';
       state.tooltipProject = project;

@@ -28,26 +28,33 @@ async function fixture(t, behavior = {}) {
       await behavior.run?.(args, options);
       if (args.includes('config')) {
         const id = args[2];
+        const configured = await behavior.config?.(args, options, id);
         return {
-          stdout: JSON.stringify({
-            services: {
-              app: {
-                build: { context: project },
-                ports: [
-                  {
-                    host_ip: '127.0.0.1',
-                    published: '0',
-                    target: 3000,
-                  },
-                ],
-                volumes: [
-                  { type: 'volume', source: 'tasks-data', target: '/app/data' },
-                ],
+          stdout: JSON.stringify(
+            configured || {
+              services: {
+                app: {
+                  build: { context: options.cwd },
+                  ports: [
+                    {
+                      host_ip: '127.0.0.1',
+                      published: '0',
+                      target: 3000,
+                    },
+                  ],
+                  volumes: [
+                    {
+                      type: 'volume',
+                      source: 'tasks-data',
+                      target: '/app/data',
+                    },
+                  ],
+                },
               },
+              volumes: { 'tasks-data': { name: `${id}_tasks-data` } },
+              networks: { default: { name: `${id}_default` } },
             },
-            volumes: { 'tasks-data': { name: `${id}_tasks-data` } },
-            networks: { default: { name: `${id}_default` } },
-          }),
+          ),
         };
       }
       if (args.includes('port')) return { stdout: `127.0.0.1:${nextPort++}\n` };
@@ -195,6 +202,119 @@ test('only allowlisted local projects can be launched', async (t) => {
   await assert.rejects(manager.launch('example:constructor'), { status: 400 });
   await assert.rejects(manager.launch('example:Other'), { status: 400 });
   assert.equal(calls.length, 0);
+});
+
+test('imported Compose projects launch on an isolated loopback port', async (t) => {
+  const { root, calls, manager, settled } = await fixture(t, {
+    config(args, options, id) {
+      return {
+        services: {
+          app: {
+            build: { context: options.cwd },
+            ports: [
+              {
+                host_ip: '127.0.0.1',
+                published: '8082',
+                target: 3001,
+                protocol: 'tcp',
+              },
+            ],
+          },
+        },
+        networks: { default: { name: `${id}_default` } },
+      };
+    },
+  });
+  const repositoryId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+  const source = path.join(
+    root,
+    '.nucleus',
+    'projects',
+    repositoryId,
+    'source',
+  );
+  await fs.mkdir(source, { recursive: true });
+  await fs.writeFile(
+    path.join(root, '.nucleus', 'projects', repositoryId, 'project.json'),
+    JSON.stringify({
+      id: `repository:${repositoryId}`,
+      name: 'lab',
+      owner: 'WafaaBajjouk',
+      url: 'https://github.com/WafaaBajjouk/lab',
+    }),
+  );
+  await fs.writeFile(
+    path.join(source, 'compose.yaml'),
+    'services:\n  app:\n    build: .\n',
+  );
+  const launch = await manager.launch(`repository:${repositoryId}`);
+  const result = await settled(launch.id);
+  assert.equal(result.runtimeStatus, 'up');
+  assert.equal(result.name, 'lab');
+  assert.equal(result.url, 'http://127.0.0.1:45000');
+
+  const configCall = calls.find((call) => call.args.includes('config'));
+  assert.equal(configCall.options.cwd, await fs.realpath(source));
+  assert.equal(
+    configCall.args[configCall.args.indexOf('-f') + 1],
+    path.join(source, 'compose.yaml'),
+  );
+  const normalized = JSON.parse(
+    await fs.readFile(
+      path.join(root, '.nucleus', 'instances', launch.id, 'compose.json'),
+      'utf8',
+    ),
+  );
+  assert.equal(normalized.services.app.ports[0].host_ip, '127.0.0.1');
+  assert.equal(normalized.services.app.ports[0].published, '0');
+  assert.equal(
+    calls.find((call) => call.args.includes('port')).args.at(-1),
+    '3001',
+  );
+});
+
+test('imported Compose projects with privileged services are rejected', async (t) => {
+  const { root, calls, manager, settled } = await fixture(t, {
+    config(args, options) {
+      return {
+        services: {
+          app: {
+            build: { context: options.cwd },
+            privileged: true,
+            ports: [{ target: 3001, published: '8082' }],
+          },
+        },
+      };
+    },
+  });
+  const repositoryId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+  const projectDirectory = path.join(
+    root,
+    '.nucleus',
+    'projects',
+    repositoryId,
+  );
+  const source = path.join(projectDirectory, 'source');
+  await fs.mkdir(source, { recursive: true });
+  await fs.writeFile(
+    path.join(projectDirectory, 'project.json'),
+    JSON.stringify({
+      id: `repository:${repositoryId}`,
+      name: 'unsafe',
+      owner: 'acme',
+      url: 'https://github.com/acme/unsafe',
+    }),
+  );
+  await fs.writeFile(path.join(source, 'compose.yaml'), 'services: {}');
+
+  const launch = await manager.launch(`repository:${repositoryId}`);
+  const result = await settled(launch.id);
+  assert.equal(result.runtimeStatus, 'failed');
+  assert.match(result.message, /no host access/);
+  assert.equal(
+    calls.some((call) => call.args.includes('up')),
+    false,
+  );
 });
 
 test('missing Docker executable gives cross-platform installation guidance', async (t) => {

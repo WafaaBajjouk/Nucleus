@@ -572,6 +572,53 @@ input::placeholder {
   color: var(--muted);
   margin: 18px 0;
 }
+.repository-form {
+  display: grid;
+  gap: 8px;
+  margin: 20px 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+}
+.repository-form label {
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+}
+.repository-form > div {
+  display: flex;
+  gap: 10px;
+}
+.repository-form input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--bg);
+  color: var(--text);
+}
+.repository-form small {
+  color: var(--muted);
+  font-size: 10px;
+}
+.add-project-page {
+  max-width: 760px;
+}
+.add-project-page .repository-form {
+  margin-top: 32px;
+  padding: 24px;
+}
+.add-project-page .repository-form .project-status {
+  margin: 8px 0 0;
+}
+.add-project-note {
+  max-width: 640px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.8;
+}
 .project-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -973,6 +1020,10 @@ code {
   }
   .project-grid {
     grid-template-columns: 1fr;
+  }
+  .repository-form > div {
+    align-items: stretch;
+    flex-direction: column;
   }
   .page-footer {
     flex-wrap: wrap;

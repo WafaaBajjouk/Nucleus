@@ -11,7 +11,16 @@ export function initGraphSelection(state) {
       state.details.textContent = 'No projects available.';
       return;
     }
-    state.details.textContent = `${project.name} · ${project.version} · Demo workspace. ${project.description} ${project.composeFile ? `Compose: ${project.composeFile}.` : 'No Compose file found.'}`;
+    const source =
+      project.source === 'github'
+        ? `Public GitHub repository ${project.owner}/${project.name}`
+        : 'Bundled demo project';
+    const deployment = !project.composeFile
+      ? 'No Compose file found.'
+      : project.launchable === false
+        ? 'Compose found; launch is unavailable.'
+        : `Compose: ${project.composeFile}.`;
+    state.details.textContent = `${project.name} · ${project.version} · ${source}. ${project.description} ${deployment}`;
   }
   return { selectProject };
 }

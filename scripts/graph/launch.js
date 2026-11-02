@@ -6,6 +6,10 @@ function statusLabel(instance) {
   return 'Unknown';
 }
 
+function canLaunch(project) {
+  return Boolean(project?.composeFile) && project.launchable !== false;
+}
+
 export function initGraphLaunch(state) {
   const launch = state.tooltipLaunch;
   const status = state.tooltipLaunchStatus;
@@ -142,21 +146,21 @@ export function initGraphLaunch(state) {
   state.onDockerReadinessChange = (readiness) => {
     state.dockerReady = readiness.ready;
     launch.disabled =
-      busy || !state.tooltipProject?.composeFile || !readiness.ready;
-    if (busy || !state.tooltipProject?.composeFile) return;
+      busy || !canLaunch(state.tooltipProject) || !readiness.ready;
+    if (busy || !canLaunch(state.tooltipProject)) return;
     status.textContent = readiness.ready
-      ? `Launch ${state.tooltipProject.name}.`
+      ? `Launch ${state.tooltipProject.name}.${state.tooltipProject.source === 'github' ? ' Review repository code before running it in Docker.' : ''}`
       : readiness.message;
   };
   state.onTooltipProjectChange = (project) => {
     state.tooltipProject = project;
-    launch.disabled = busy || !project?.composeFile || !state.dockerReady;
+    launch.disabled = busy || !canLaunch(project) || !state.dockerReady;
     status.textContent = project
-      ? project.composeFile
+      ? canLaunch(project)
         ? state.dockerReady
-          ? `Launch ${project.name}.`
+          ? `Launch ${project.name}.${project.source === 'github' ? ' Review repository code before running it in Docker.' : ''}`
           : 'Docker is not ready. See the setup status below.'
-        : 'This project cannot be launched.'
+        : 'This project does not have a Compose file.'
       : 'Hover over or focus a project to see its launch action.';
     render(state.instances || []);
   };
@@ -182,7 +186,7 @@ export function initGraphLaunch(state) {
 
   launch.addEventListener('click', async () => {
     const project = state.tooltipProject;
-    if (busy || !project?.composeFile || !state.dockerReady) return;
+    if (busy || !canLaunch(project) || !state.dockerReady) return;
     busy = true;
     launch.disabled = true;
     launch.textContent = 'Starting…';
@@ -203,8 +207,7 @@ export function initGraphLaunch(state) {
     } finally {
       busy = false;
       launch.textContent = 'Launch project';
-      launch.disabled =
-        !state.tooltipProject?.composeFile || !state.dockerReady;
+      launch.disabled = !canLaunch(state.tooltipProject) || !state.dockerReady;
     }
   });
 

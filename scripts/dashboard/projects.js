@@ -1,4 +1,4 @@
-import { loadExampleProjects } from '../../data/projects.js';
+import { loadProjects } from '../../data/projects.js';
 
 export function initProjectCatalogue() {
   const grid = document.querySelector('#project-list');
@@ -25,15 +25,20 @@ export function initProjectCatalogue() {
         description.textContent = project.description;
         const directory = document.createElement('small');
         directory.className = 'project-directory';
-        directory.textContent = 'Demo workspace';
+        directory.textContent =
+          project.source === 'github'
+            ? `GitHub · ${project.owner}/${project.name}`
+            : 'Bundled demo';
         const footer = document.createElement('div');
         footer.className = 'project-footer';
         const version = document.createElement('code');
         version.textContent = project.version;
         const compose = document.createElement('span');
-        compose.textContent = project.composeFile
-          ? 'Compose file found'
-          : 'No Compose file';
+        compose.textContent = !project.composeFile
+          ? 'No Compose file'
+          : project.launchable === false
+            ? 'Compose found · launch unavailable'
+            : 'Compose found · launch available';
         const link = document.createElement('a');
         link.className = 'project-link';
         link.href = `graph.html?project=${encodeURIComponent(project.id)}`;
@@ -47,16 +52,16 @@ export function initProjectCatalogue() {
       ? `${visible.length} project${visible.length === 1 ? '' : 's'}`
       : projects.length
         ? 'No projects match your search.'
-        : 'No projects in this demo workspace.';
+        : 'No projects in the catalogue.';
   }
 
   async function refreshProjects() {
     refresh.disabled = true;
     search.disabled = true;
     grid.setAttribute('aria-busy', 'true');
-    status.textContent = 'Loading demo workspace…';
+    status.textContent = 'Loading projects…';
     try {
-      projects = await loadExampleProjects();
+      projects = await loadProjects();
       document.querySelector('#project-total').textContent = projects.length;
       document.querySelector('#compose-total').textContent = projects.filter(
         (project) => project.composeFile,

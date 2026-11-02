@@ -22,6 +22,9 @@ function element() {
     addEventListener(name, handler) {
       this.handlers[name] = handler;
     },
+    querySelector() {
+      return this.submitButton || element();
+    },
     setAttribute(name, value) {
       this.attributes[name] = value;
     },
@@ -43,6 +46,17 @@ const project = {
   directory: 'examples/TaskNest',
   composeFile: 'compose.yaml',
   source: 'example',
+};
+const importedProject = {
+  id: 'repository:aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
+  name: 'team-service',
+  owner: 'acme',
+  version: 'main',
+  description: 'Public GitHub repository: acme/team-service.',
+  directory: '.nucleus/projects/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/source',
+  composeFile: 'compose.yaml',
+  launchable: true,
+  source: 'github',
 };
 
 test('dashboard derives counts, cards and search from the shared local catalogue', async () => {
@@ -66,20 +80,30 @@ test('dashboard derives counts, cards and search from the shared local catalogue
     'initProjectCatalogue',
     {
       document,
-      loadExampleProjects: async () => {
+      loadProjects: async () => {
         calls++;
-        return [project];
+        return [project, importedProject];
       },
     },
   );
   await init();
   assert.equal(calls, 1);
-  assert.equal(nodes['#project-total'].textContent, 1);
-  assert.equal(nodes['#compose-total'].textContent, 1);
-  assert.equal(nodes['#project-list'].children.length, 1);
+  assert.equal(nodes['#project-total'].textContent, 2);
+  assert.equal(nodes['#compose-total'].textContent, 2);
+  assert.equal(nodes['#project-list'].children.length, 2);
   const card = nodes['#project-list'].children[0];
   assert.equal(card.children[1].textContent, 'TaskNest');
   assert.match(card.children.at(-1).href, /project=example%3ATaskNest/);
+  assert.equal(card.children[3].textContent, 'Bundled demo');
+  const importedCard = nodes['#project-list'].children[1];
+  assert.equal(
+    importedCard.children[3].textContent,
+    'GitHub · acme/team-service',
+  );
+  assert.equal(
+    importedCard.children[4].children[1].textContent,
+    'Compose found · launch available',
+  );
   nodes['#project-search'].value = 'missing';
   nodes['#project-search'].handlers.input();
   assert.equal(nodes['#project-list'].children.length, 0);
@@ -87,7 +111,7 @@ test('dashboard derives counts, cards and search from the shared local catalogue
     nodes['#project-status'].textContent,
     'No projects match your search.',
   );
-  assert.equal(nodes['#project-total'].textContent, 1);
+  assert.equal(nodes['#project-total'].textContent, 2);
 });
 
 test('graph loads the demo workspace from the shared local catalogue', async () => {
@@ -110,9 +134,9 @@ test('graph loads the demo workspace from the shared local catalogue', async () 
     document: { querySelector: (key) => nodes[key], createElement: element },
     window: { location: { search: '?project=example%3ATaskNest' } },
     URLSearchParams,
-    loadExampleProjects: async () => {
+    loadProjects: async () => {
       localCalls++;
-      return [project];
+      return [project, importedProject];
     },
     arrangeProjects() {},
     drawEdges() {},
@@ -124,10 +148,14 @@ test('graph loads the demo workspace from the shared local catalogue', async () 
     },
   });
   assert.equal(localCalls, 1);
-  assert.equal(state.projectNodes.length, 1);
+  assert.equal(state.projectNodes.length, 2);
   assert.equal(state.selectedProject.name, 'TaskNest');
+  assert.match(
+    state.projectNodes[1].children[1].textContent,
+    /GitHub · acme\/team-service/,
+  );
   assert.equal(labels.strong.textContent, 'Nucleus');
-  assert.match(nodes['#graph-status'].textContent, /1 demo projects/);
+  assert.match(nodes['#graph-status'].textContent, /1 demos · 1 GitHub repos/);
   assert.equal(nodes['#local-projects'].disabled, false);
 });
 
@@ -147,7 +175,7 @@ test('dashboard reports local source errors without inventing project counts', a
     'initProjectCatalogue',
     {
       document: { querySelector: (key) => nodes[key], createElement: element },
-      loadExampleProjects: async () => {
+      loadProjects: async () => {
         throw Error('Unavailable');
       },
     },

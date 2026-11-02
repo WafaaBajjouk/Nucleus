@@ -14,6 +14,7 @@ const sections = new Set([
   'instances',
   'graph-toolbar',
   'graph-canvas',
+  'add-project',
 ]);
 
 async function renderPage(filename) {
