@@ -2,34 +2,57 @@
 
 **Launch. Monitor. Verify.**
 
-A **self-hosted project catalogue**. Admins register containerised projects; users launch selected versions in isolated Docker Compose environments. The host needs Docker with Compose running and compatible container images.
+A local dashboard to browse four demo projects, import public GitHub
+repositories, and launch supported Docker Compose projects from a graph.
+Each launch runs in its own isolated Compose project on a loopback port.
+Nucleus is local and single-user: it has no accounts or permissions.
 
+## Run
 
-## Run locally
-
-Requirements: Node.js 22.5+. Git is needed to import repositories. Docker with
-Compose v2 is needed to launch apps.
+Requires Node.js 22.5+. Git is needed to import repositories. Docker Compose
+and a running engine are needed to launch them. The application lives in
+`project/`:
 
 ```sh
+cd project
 npm install
 npm start
 ```
 
-## How it works
+Open http://localhost:8000. Browsing works without Docker.
+
+## Architecture
 
 ```mermaid
 flowchart LR
-    Browser["Dashboard and graph"] <-->|"HTTP API"| Nucleus["Nucleus server"]
-    GitHub["Public GitHub"] -->|"Git clone"| Nucleus
-    Nucleus --> Examples["Bundled examples and imported projects"]
-    Nucleus -->|"Validate and launch"| Docker["Docker Compose"]
-    Docker --> App["Running app"]
-    Docker -->|"Instance status and resource usage"| Nucleus
+    User["User"] <--> UI["Dashboard · graph · import form"]
+    UI <--> HTTP["HTTP controllers"]
+    HTTP <--> Core["Catalogues and services"]
+    Core <--> Examples["Bundled examples"]
+    Core <--> Imported["Local imported repositories"]
+    Core <-->|"Clone public repository"| GitHub["GitHub"]
+    Core <-->|"Compose · status · usage"| Docker["Docker Engine"]
+    Docker --> App["Launched project"]
+    Core <--> Records["Local instance records"]
 ```
 
-Imported repositories need a supported root Compose file. Review repository
-code before launching it; Nucleus rejects configurations outside its safety
-checks. The dashboard reports Docker-provided instance status, health, CPU and
-memory. No account is required.
+The server binds to loopback. Imported projects need a supported root Compose
+file with one `app` service, one TCP port and a healthcheck; review their code
+before launch. An instance is reported ready only after its health check
+passes. Docker status and resource figures are refreshed periodically; they
+are not continuous monitoring.
 
-Run checks with `npm test` and `npm run test:examples`.
+## Checks
+
+```sh
+cd project
+npm test
+npm run test:examples
+```
+
+## Project record
+
+- [Checkpoint A: claims, context and evidence](checkpoint-a.md)
+- [Checkpoint B: lifecycle and specification](checkpoint-b.md)
+- [Checkpoint C: quality evidence](checkpoint-c.md)
+
