@@ -342,6 +342,82 @@ test('imported Compose projects with privileged services are rejected', async (t
   );
 });
 
+test('a project without a Compose file or Dockerfile is rejected and nothing is started or recorded', async (t) => {
+  const { root, calls, manager } = await fixture(t);
+  const repositoryId = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
+  const source = await importRepository(root, repositoryId, 'nocompose');
+  await fs.rm(path.join(source, 'compose.yaml'));
+
+  await assert.rejects(manager.launch(`repository:${repositoryId}`), {
+    status: 400,
+    message: 'Project needs a Compose file or a Dockerfile.',
+  });
+  assert.equal(calls.length, 0, 'Docker must not be called');
+  assert.deepEqual(await manager.list(), [], 'no instance record is created');
+});
+
+test('a Dockerfile-only project gets a generated Compose file and launches', async (t) => {
+  let generated;
+  const { root, calls, manager, settled } = await fixture(t, {
+    async config(args, options, id) {
+      // Stand in for `docker compose config`: echo the generated file back.
+      generated = JSON.parse(
+        await fs.readFile(args[args.indexOf('-f') + 1], 'utf8'),
+      );
+      return { ...generated, networks: { default: { name: `${id}_default` } } };
+    },
+  });
+  const repositoryId = 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee';
+  const source = await importRepository(root, repositoryId, 'dockeronly');
+  await fs.rm(path.join(source, 'compose.yaml'));
+  await fs.writeFile(
+    path.join(source, 'Dockerfile'),
+    'FROM node:22-alpine\nEXPOSE 4000\nHEALTHCHECK CMD ["node","-e","process.exit(0)"]\n',
+  );
+
+  const launch = await manager.launch(`repository:${repositoryId}`);
+  const result = await settled(launch.id);
+  assert.equal(result.runtimeStatus, 'up');
+  assert.equal(result.health, 'healthy');
+
+  const configCall = calls.find((call) => call.args.includes('config'));
+  assert.equal(
+    configCall.args[configCall.args.indexOf('-f') + 1],
+    path.join(root, '.nucleus/instances', launch.id, 'generated-compose.json'),
+    'the generated file lives with the instance, not in the repository',
+  );
+  assert.equal(generated.services.app.ports[0].target, 4000);
+  assert.deepEqual(generated.services.app.healthcheck.test, [
+    'CMD',
+    'node',
+    '-e',
+    'process.exit(0)',
+  ]);
+  assert.equal(
+    calls.find((call) => call.args.includes('port')).args.at(-1),
+    '4000',
+  );
+  await assert.rejects(fs.access(path.join(source, 'compose.yaml')));
+});
+
+test('a Dockerfile without HEALTHCHECK is refused before Docker runs', async (t) => {
+  const { root, calls, manager } = await fixture(t);
+  const repositoryId = 'ffffffff-ffff-4fff-8fff-ffffffffffff';
+  const source = await importRepository(root, repositoryId, 'nohealth');
+  await fs.rm(path.join(source, 'compose.yaml'));
+  await fs.writeFile(
+    path.join(source, 'Dockerfile'),
+    'FROM node:22-alpine\nEXPOSE 4000\n',
+  );
+
+  await assert.rejects(manager.launch(`repository:${repositoryId}`), {
+    status: 400,
+    message: /no HEALTHCHECK/,
+  });
+  assert.equal(calls.length, 0, 'Docker must not be called');
+  assert.deepEqual(await manager.list(), [], 'no instance record is created');
+});
+
 test('projects without a usable healthcheck are rejected before any container starts', async (t) => {
   const variants = [
     ['missing', undefined],

@@ -57,7 +57,11 @@ async function listPublicRepositories(root) {
           source: 'github',
           composeFile:
             composeFilenames.find((name) => filenames.has(name)) || null,
-          launchable: composeFilenames.some((name) => filenames.has(name)),
+          // Without a Compose file, a root Dockerfile lets Nucleus generate one.
+          dockerfile: filenames.has('Dockerfile') ? 'Dockerfile' : null,
+          launchable:
+            composeFilenames.some((name) => filenames.has(name)) ||
+            filenames.has('Dockerfile'),
         };
       }),
   );
