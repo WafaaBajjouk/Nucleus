@@ -10,6 +10,12 @@ function canLaunch(project) {
   return Boolean(project?.composeFile) && project.launchable !== false;
 }
 
+// Naming the target on the button keeps the launched project explicit
+// (Checkpoint C, risk 2: wrong project selected).
+function launchLabel(project) {
+  return project ? `Launch ${project.name}` : 'Launch project';
+}
+
 export function initGraphLaunch(state) {
   const launch = state.tooltipLaunch;
   const status = state.tooltipLaunchStatus;
@@ -154,6 +160,7 @@ export function initGraphLaunch(state) {
   };
   state.onTooltipProjectChange = (project) => {
     state.tooltipProject = project;
+    if (!busy) launch.textContent = launchLabel(project);
     launch.disabled = busy || !canLaunch(project) || !state.dockerReady;
     status.textContent = project
       ? canLaunch(project)
@@ -206,7 +213,7 @@ export function initGraphLaunch(state) {
       status.textContent = error.message;
     } finally {
       busy = false;
-      launch.textContent = 'Launch project';
+      launch.textContent = launchLabel(state.tooltipProject);
       launch.disabled = !canLaunch(state.tooltipProject) || !state.dockerReady;
     }
   });

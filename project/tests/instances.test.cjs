@@ -9,6 +9,29 @@ const {
   findDockerExecutable,
 } = require('../services/instances.cjs');
 
+const healthcheck = {
+  test: ['CMD', 'node', '-e', 'process.exit(0)'],
+  interval: '3s',
+  retries: 10,
+};
+
+async function importRepository(root, repositoryId, name) {
+  const projectDirectory = path.join(root, '.nucleus', 'projects', repositoryId);
+  const source = path.join(projectDirectory, 'source');
+  await fs.mkdir(source, { recursive: true });
+  await fs.writeFile(
+    path.join(projectDirectory, 'project.json'),
+    JSON.stringify({
+      id: `repository:${repositoryId}`,
+      name,
+      owner: 'acme',
+      url: `https://github.com/acme/${name}`,
+    }),
+  );
+  await fs.writeFile(path.join(source, 'compose.yaml'), 'services: {}');
+  return source;
+}
+
 async function fixture(t, behavior = {}) {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), 'nucleus-status-'));
   const project = path.join(root, 'examples', 'TaskNest');
@@ -35,6 +58,7 @@ async function fixture(t, behavior = {}) {
               services: {
                 app: {
                   build: { context: options.cwd },
+                  healthcheck,
                   ports: [
                     {
                       host_ip: '127.0.0.1',
@@ -211,6 +235,7 @@ test('imported Compose projects launch on an isolated loopback port', async (t) 
         services: {
           app: {
             build: { context: options.cwd },
+            healthcheck,
             ports: [
               {
                 host_ip: '127.0.0.1',
@@ -315,6 +340,41 @@ test('imported Compose projects with privileged services are rejected', async (t
     calls.some((call) => call.args.includes('up')),
     false,
   );
+});
+
+test('projects without a usable healthcheck are rejected before any container starts', async (t) => {
+  const variants = [
+    ['missing', undefined],
+    ['disabled', { ...healthcheck, disable: true }],
+    ['NONE', { test: ['NONE'] }],
+    ['empty test', { test: [] }],
+  ];
+  for (const [label, check] of variants) {
+    const { root, calls, manager, settled } = await fixture(t, {
+      config(args, options) {
+        return {
+          services: {
+            app: {
+              build: { context: options.cwd },
+              ...(check && { healthcheck: check }),
+              ports: [{ target: 3001, published: '8082' }],
+            },
+          },
+        };
+      },
+    });
+    const repositoryId = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
+    await importRepository(root, repositoryId, 'nohealth');
+    const launch = await manager.launch(`repository:${repositoryId}`);
+    const result = await settled(launch.id);
+    assert.equal(result.runtimeStatus, 'failed', label);
+    assert.match(result.message, /needs a Compose healthcheck/, label);
+    assert.equal(
+      calls.some((call) => call.args.includes('up')),
+      false,
+      `${label}: no container may start`,
+    );
+  }
 });
 
 test('missing Docker executable gives cross-platform installation guidance', async (t) => {

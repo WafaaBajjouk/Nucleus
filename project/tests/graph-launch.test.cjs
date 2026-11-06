@@ -157,6 +157,8 @@ test('project tooltip launches its own project and renders the app link', async 
   assert.equal(state.tooltipProject.id, 'example:JsonDesk');
   assert.ok(state.tooltip.contains(state.tooltipLaunch));
   assert.equal(state.tooltipLaunch.disabled, false);
+  // The graph selection is TaskNest; the button must name the hovered target.
+  assert.equal(state.tooltipLaunch.textContent, 'Launch JsonDesk');
   await state.tooltipLaunch.handlers.click();
 
   assert.deepEqual(launchRequest, {
@@ -164,7 +166,7 @@ test('project tooltip launches its own project and renders the app link', async 
     body: { projectId: 'example:JsonDesk' },
   });
   assert.equal(state.tooltipLaunch.disabled, false);
-  assert.equal(state.tooltipLaunch.textContent, 'Launch project');
+  assert.equal(state.tooltipLaunch.textContent, 'Launch JsonDesk');
   assert.equal(state.tooltipAppLink.hidden, false);
   assert.equal(state.tooltipAppLink.href, 'http://127.0.0.1:49152');
   assert.equal(list.children.length, 1);
