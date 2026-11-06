@@ -7,7 +7,10 @@ function statusLabel(instance) {
 }
 
 function canLaunch(project) {
-  return Boolean(project?.composeFile) && project.launchable !== false;
+  return (
+    Boolean(project?.composeFile || project?.dockerfile) &&
+    project.launchable !== false
+  );
 }
 
 // Naming the target on the button keeps the launched project explicit
@@ -167,7 +170,7 @@ export function initGraphLaunch(state) {
         ? state.dockerReady
           ? `Launch ${project.name}.${project.source === 'github' ? ' Review repository code before running it in Docker.' : ''}`
           : 'Docker is not ready. See the setup status below.'
-        : 'This project does not have a Compose file.'
+        : 'This project has no Compose file or Dockerfile.'
       : 'Hover over or focus a project to see its launch action.';
     render(state.instances || []);
   };

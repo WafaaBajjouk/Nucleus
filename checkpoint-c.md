@@ -2,36 +2,49 @@
 
 ## Priority risk
 
-The highest-priority risk is: naming or port collision, where one instance interferes with another and creates misleading output.
+Unsupported Compose setup: the developer chooses a project that has no Compose file and loses time on a launch that can never work.
 
 ## Risk-control map
 
-| # | Risk | Why it matters | Control | Cost | Example | Residual risk |
-|---|---|---|---|---|---|---|
-| 1 | Name or port collision | One instance can interfere with another and make the user think the wrong app is running | Unique Compose name and loopback port per instance | Low | Two instances both try to use port 8000 or share the same project name | Host Docker issues can still block startup |
-| 2 | Wrong project selected | The user may test the wrong app even when the launch flow appears successful | Keep project identity explicit in the launch request and display it back to the user before launch | Low | User selects TaskNest in the graph, but the dashboard later shows a different target instance | Some imported projects may still be rejected |
-| 3 | Unsupported Compose setup | The app may fail before it even starts, wasting time and creating confusion | Validate the Compose file before launch | Low | A repo with no root compose file or broken YAML is rejected before startup | Some unusual valid layouts may be excluded |
-| 4 | False healthy state | The app may be shown as ready even though it is not working | Require Docker status and health before marking ready | Medium | Docker says the container exists, but the health endpoint is not ready | Health does not prove full correctness |
-| 5 | Stale instance confusion | Old instances can remain visible and mislead later testing | Remove instances as part of the flow and refresh dashboard state | Low | An old instance remains visible after shutdown | Cleanup may fail under Docker issues |
+Actors: **Developer** (runs Nucleus), **Reviewer** (relies on the developer's result), **Host** (the developer's machine and its other services).
 
-## Quality story
+| # | Risk | Actors | Explanation | Likelihood · Impact | Control (type) | Cost | Residual risk |
+|---|---|---|---|---|---|---|---|
+| 1 | Name or port collision | Developer, Reviewer | Two instances share a name or port, so one overwrites or answers for the other. The result looks valid but is wrong. | Low · High | Unique Compose name and random loopback port per instance (prevent) | Low | Docker host problems can still block startup |
+| 2 | Wrong project selected | Developer, Reviewer | The developer hovers one project while another is selected, and launches the wrong one. | Medium · High | Launch button names its target, e.g. "Launch JsonDesk" (prevent, **non-test: UI design**) | Low | The developer can still ignore the label |
+| 3 | Unsupported or unsafe Compose setup | Developer, Host | An imported repository may have no Compose file, or need host access or several services. It fails late or touches the host. | High · Medium | Validate the Compose file before any container starts, plus a "review code before launch" notice (prevent, **non-test: human review**) | Low | Some valid layouts are rejected; the repository code itself is not inspected |
+| 4 | False healthy state | Developer, Reviewer | A container is running but the app is not working, and Nucleus shows it as ready. | Medium · High | Require a healthcheck; ready only after it passes (detect) | Medium | A health check proves only what it tests |
+| 5 | Stale instance | Developer, Host | An old instance stays visible or keeps using resources and is mistaken for a current one. | Medium · Medium | Remove instances with their volumes; dashboard checks Docker every 3 s (recover) | Low | Cleanup can fail if Docker is down |
 
-This risk was prioritized because it is the most damaging failure in the local workflow: the developer may believe they are testing the correct app while actually running the wrong target, a broken container, or a stale environment. The chosen control is worth its cost because it blocks the failure early and prevents wasted debugging time. The relevant evidence is the launch tests and the live TaskNest demo showing a healthy instance and clean removal.
+## Quality story (risk 3): a project without a Compose file
+
+- **Scenario:** the developer imports a GitHub repository that has a Dockerfile but no Compose file.
+- **Why it matters:** many repositories have only a Dockerfile. Refusing them all made Nucleus useless for them.
+- **Change:** Nucleus now generates the Compose file at launch. Nothing is guessed:
+  - port: the Dockerfile's single `EXPOSE`;
+  - health check: the Dockerfile's `HEALTHCHECK`;
+  - no `HEALTHCHECK`, several ports, or neither file: refused at once with a reason.
+- **Kept on purpose:** the generated file goes through the same Compose checks as a hand-written one. It is saved with the instance, never inside the repository.
+- **Evidence:** 6 new tests (45/45 pass). Live check in Docker: a Dockerfile-only project reached up · healthy and answered on its port.
+- **Limit:** a Dockerfile without a `HEALTHCHECK` is still refused. Repositories with no Dockerfile are not supported.
+- **Next:** import a few real GitHub repositories and count how many qualify.
 
 ## Review and AI record
 
-During review, the launch flow was corrected to validate supported projects and reserve a unique project name and port before startup. This was a documented decision, not just approval. AI assistance was used only to refine reasoning and documentation; the student verified the final claims and evidence.
+- **PR #1 (6 Nov 2026):** review found that risk 4 was not enforced. A project without a healthcheck was shown as ready.
+- **Fix:** launch rejects a missing or disabled healthcheck before anything starts. The new test fails without the fix (39/39 pass with it).
+- **Trade-off kept:** a healthcheck that exists only in the Dockerfile is not accepted.
+- **AI use:** Claude (Claude Code) found the gap and wrote the fix, the tests and this record. I reviewed the diff, reran the tests and merged PR #1.
 
-## Review record — 6 Nov 2026: false healthy state (risk 4)
+## Open unknowns
 
-- **Problem:** a project without a healthcheck was shown as ready once its container ran.
-- **Fix:** launch now rejects a missing or disabled healthcheck before anything starts.
-- **Evidence:** the new test fails without the fix and passes with it (39/39 tests pass).
-- **Trade-off:** a healthcheck only in the Dockerfile is not accepted.
-- **Limit:** a passing health check does not prove the whole app works.
-- **Risk 2:** the launch button now names its project, e.g. "Launch JsonDesk".
-- **AI use:** Claude found the gap and wrote the fix and tests. I reviewed them and reran the tests.
+- Behaviour on Linux and Windows Docker hosts is untested.
+- Imported repository code runs in Docker without a code scan.
 
 ## Definition of Done
 
-A task is complete only when the selected project is valid, the instance is isolated, Docker reports it healthy, and the instance can be removed without affecting other local instances.
+A change is done when:
+- the selected project is valid and has a healthcheck;
+- the instance is isolated and Docker reports it healthy;
+- it can be removed without affecting other instances;
+- **each risk control has a test that fails if the control is removed** (new rule, from PR #1).

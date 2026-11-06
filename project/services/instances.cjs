@@ -5,6 +5,7 @@ const { constants, accessSync } = require('node:fs');
 const fs = require('node:fs/promises');
 const os = require('node:os');
 const path = require('node:path');
+const { generateCompose } = require('./compose-generator.cjs');
 
 const execute = promisify(execFile);
 const supported = {
@@ -278,7 +279,10 @@ function createInstances({ root = path.join(__dirname, '..'), run } = {}) {
     let deploymentStarted = false;
     let stage = 'Docker engine';
     const source = project.sourceDirectory;
-    const composeSource = path.join(source, project.composeFile);
+    // A generated file lives with the instance, never inside the repository.
+    const composeSource = project.generatedCompose
+      ? path.join(location(record.id), 'generated-compose.json')
+      : path.join(source, project.composeFile);
     const composeFile = path.join(location(record.id), 'compose.json');
     try {
       const sourceReal = await fs.realpath(source);
@@ -286,11 +290,16 @@ function createInstances({ root = path.join(__dirname, '..'), run } = {}) {
       const projectRoot = project.imported
         ? await fs.realpath(path.join(root, '.nucleus', 'projects'))
         : await fs.realpath(path.join(root, 'examples'));
+      if (project.generatedCompose)
+        await fs.writeFile(
+          composeSource,
+          JSON.stringify(project.generatedCompose, null, 2),
+        );
       const composeReal = await fs.realpath(composeSource);
       if (
         !isWithin(rootReal, sourceReal) ||
         !isWithin(projectRoot, sourceReal) ||
-        !isWithin(sourceReal, composeReal)
+        (!project.generatedCompose && !isWithin(sourceReal, composeReal))
       )
         throw failure(
           'Linked project files outside the project are not supported.',
@@ -431,16 +440,34 @@ function createInstances({ root = path.join(__dirname, '..'), run } = {}) {
         listPublicRepositories,
       } = require('../models/public-repository-catalogue.cjs');
       const imported = (await listPublicRepositories(root)).find(
-        (item) => item.id === projectId && item.composeFile,
+        (item) =>
+          item.id === projectId && (item.composeFile || item.dockerfile),
       );
       if (!imported)
-        throw failure('Project does not have a supported Compose file.');
+        throw failure('Project needs a Compose file or a Dockerfile.');
       name = imported.name;
+      const sourceDirectory = path.join(root, imported.directory);
+      let generatedCompose = null;
+      if (!imported.composeFile) {
+        const sourceReal = await fs.realpath(sourceDirectory);
+        const dockerfileReal = await fs.realpath(
+          path.join(sourceReal, 'Dockerfile'),
+        );
+        if (!isWithin(sourceReal, dockerfileReal))
+          throw failure(
+            'Linked project files outside the project are not supported.',
+          );
+        generatedCompose = generateCompose(
+          await fs.readFile(dockerfileReal, 'utf8'),
+          sourceReal,
+        );
+      }
       project = {
         ...imported,
-        sourceDirectory: path.join(root, imported.directory),
+        sourceDirectory,
         imported: true,
         port: null,
+        generatedCompose,
       };
     } else {
       throw failure('Select a supported project.');
