@@ -25,9 +25,17 @@ Actors: **Developer** (runs Nucleus), **Reviewer** (relies on the developer's re
   - health check: the Dockerfile's `HEALTHCHECK`;
   - no `HEALTHCHECK`, several ports, or neither file: refused at once with a reason.
 - **Kept on purpose:** the generated file goes through the same Compose checks as a hand-written one. It is saved with the instance, never inside the repository.
-- **Evidence:** 6 new tests (45/45 pass). Live check in Docker: a Dockerfile-only project reached up · healthy and answered on its port.
-- **Limit:** a Dockerfile without a `HEALTHCHECK` is still refused. Repositories with no Dockerfile are not supported.
-- **Next:** import a few real GitHub repositories and count how many qualify.
+- **Evidence:** 6 new tests (45/45 pass).
+- **Real repository (6 Nov 2026):** imported `github.com/WafaaBajjouk/exam-sprint` (Dockerfile, no Compose file) and launched it twice.
+
+  | Check | Result |
+  |---|---|
+  | Compose file generated | yes, port 3000 and the Dockerfile's health check |
+  | Status | both up · healthy, on :32786 and :32787 |
+  | App answers | HTTP 200 on both ports |
+  | Repository changed | no, no Compose file added to it |
+- **Limit:** one real repository, which I wrote. A Dockerfile without a `HEALTHCHECK` is still refused. Repositories with no Dockerfile are not supported.
+- **Next:** try other people's repositories and count how many qualify.
 
 ## Review and AI record
 
