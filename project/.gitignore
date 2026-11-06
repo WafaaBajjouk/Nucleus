@@ -1,0 +1,19 @@
+node_modules/
+dist/
+coverage/
+apps/api/.nucleus/
+.nucleus/
+.DS_Store
+data/config.json
+.env
+.env.*
+.vscode/
+
+# Keep project guides public; leave class and scratch notes local
+*.md
+!/Readme.md
+!/Tasks.md
+!/DEVELOPMENT.md
+!/EVALUATION.md
+!/PORTFOLIO.md
+!/examples/*/README.md
