@@ -142,6 +142,20 @@ async function validateComposeConfig(config, instanceId, source, expectedPort) {
   )
     throw reject();
 
+  // `up --wait` only waits for health when a healthcheck exists; without one a
+  // merely running container would be reported as ready (Checkpoint C, risk 4).
+  const healthcheck = service.healthcheck;
+  if (
+    !healthcheck ||
+    healthcheck.disable ||
+    !Array.isArray(healthcheck.test) ||
+    !healthcheck.test.length ||
+    healthcheck.test[0] === 'NONE'
+  )
+    throw failure(
+      'The app service needs a Compose healthcheck. Nucleus reports an instance as ready only after its health check passes.',
+    );
+
   if (!service.image && !service.build) throw reject();
   if (service.build) {
     const build =

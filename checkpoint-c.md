@@ -22,6 +22,16 @@ This risk was prioritized because it is the most damaging failure in the local w
 
 During review, the launch flow was corrected to validate supported projects and reserve a unique project name and port before startup. This was a documented decision, not just approval. AI assistance was used only to refine reasoning and documentation; the student verified the final claims and evidence.
 
+## Review record — 6 Nov 2026: false healthy state (risk 4)
+
+- **Problem:** a project without a healthcheck was shown as ready once its container ran.
+- **Fix:** launch now rejects a missing or disabled healthcheck before anything starts.
+- **Evidence:** the new test fails without the fix and passes with it (39/39 tests pass).
+- **Trade-off:** a healthcheck only in the Dockerfile is not accepted.
+- **Limit:** a passing health check does not prove the whole app works.
+- **Risk 2:** the launch button now names its project, e.g. "Launch JsonDesk".
+- **AI use:** Claude found the gap and wrote the fix and tests. I reviewed them and reran the tests.
+
 ## Definition of Done
 
 A task is complete only when the selected project is valid, the instance is isolated, Docker reports it healthy, and the instance can be removed without affecting other local instances.
