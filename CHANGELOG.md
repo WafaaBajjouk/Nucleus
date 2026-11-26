@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Faster dashboard: the instance list no longer waits for `docker stats`
+  (2.0–2.4 s → 0.35–0.6 s with 22 instances); one background call
+  measures all running apps.
+
 ## 1.1.0
 
 - Logs for a selected instance, or the output saved at a failed launch.

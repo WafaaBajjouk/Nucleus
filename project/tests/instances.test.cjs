@@ -196,7 +196,12 @@ test('launch creates isolated Compose projects, ports, network and volume', asyn
   assert.equal(readyB.runtimeStatus, 'up');
   assert.notEqual(readyA.url, readyB.url);
   assert.equal(readyA.health, 'healthy');
-  assert.deepEqual(readyA.metrics, {
+  let measured;
+  for (let attempt = 0; attempt < 100 && !measured?.metrics; attempt++) {
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    measured = (await manager.list()).find((item) => item.id === a.id);
+  }
+  assert.deepEqual(measured.metrics, {
     cpuPercent: 2.5,
     memoryUsage: '10MiB / 1GiB',
   });
@@ -726,4 +731,32 @@ test('verify passes only when Docker health and the HTTP answer both pass', asyn
     message: 'Only a ready instance can be verified. Start it first.',
   });
   assert.equal((await manager.list())[0].lastCheck, null);
+});
+
+test('the list does not wait for docker stats; one call measures all apps', async (t) => {
+  let release;
+  const slowStats = new Promise((resolve) => (release = resolve));
+  const { calls, manager, settled } = await fixture(t, {
+    async run(args) {
+      if (args[0] === 'stats') await slowStats;
+    },
+  });
+  const first = await manager.launch('example:TaskNest');
+  const second = await manager.launch('example:TaskNest');
+  await Promise.all([settled(first.id), settled(second.id)]);
+
+  // docker stats is still running, yet the list answers.
+  const listed = await manager.list();
+  assert.equal(listed.length, 2);
+  assert.ok(listed.every((item) => item.runtimeStatus === 'up'));
+  assert.equal(listed[0].metricsMessage, 'Measuring resource usage…');
+  const statsCalls = calls.filter((call) => call.args[0] === 'stats');
+  assert.equal(statsCalls.length, 1);
+
+  release();
+  await new Promise((resolve) => setTimeout(resolve, 10));
+  const measured = await manager.list();
+  assert.equal(measured[0].metrics.cpuPercent, 2.5);
+  assert.equal(measured[0].metricsMessage, null);
+  assert.equal(calls.filter((call) => call.args[0] === 'stats').length, 1);
 });

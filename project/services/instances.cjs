@@ -229,6 +229,43 @@ function createInstances({
     run || ((args, options) => execute(dockerExecutable, args, options));
   const directory = path.join(root, '.nucleus', 'instances');
   const active = new Set();
+  // `docker stats` samples for 1-2 s, so it never blocks the list: the list
+  // shows the last measurement and one background call refreshes them all.
+  const metricsCache = new Map(); // container id prefix -> { cpuPercent, memoryUsage }
+  let metricsAt = 0;
+  let metricsFailed = false;
+  let measuring = null;
+  function refreshMetrics(containerIds) {
+    if (measuring || !containerIds.length || Date.now() - metricsAt < 5000)
+      return measuring;
+    measuring = runDocker(
+      ['stats', '--no-stream', '--format', '{{json .}}', ...containerIds],
+      { ...options, timeout: 15000 },
+    )
+      .then(({ stdout }) => {
+        metricsCache.clear();
+        for (const item of parseContainers(stdout)) {
+          const key = String(item.ID || item.Container || '')
+            .slice(0, 12)
+            .toLowerCase();
+          if (key)
+            metricsCache.set(key, {
+              cpuPercent: parsePercent(item.CPUPerc),
+              memoryUsage: String(item.MemUsage || ''),
+            });
+        }
+        metricsFailed = false;
+      })
+      .catch(() => {
+        metricsFailed = true;
+      })
+      .finally(() => {
+        metricsAt = Date.now();
+        measuring = null;
+      });
+    return measuring;
+  }
+
   // Launch requests seen by this process: requestId -> Promise of the record.
   const requests = new Map();
   // One operation at a time per instance: id -> 'starting' | 'stopping' | 'removing'.
@@ -565,7 +602,8 @@ function createInstances({
       if (error.code === 'ENOENT') return [];
       throw error;
     }
-    return Promise.all(
+    const runningIds = [];
+    const records = await Promise.all(
       entries
         .filter((entry) => entry.isDirectory() && validId.test(entry.name))
         .map(async (entry) => {
@@ -616,31 +654,17 @@ function createInstances({
                 runtimeStatus === 'up' &&
                 /^[a-f0-9]{12,64}$/i.test(containerId || '')
               ) {
-                try {
-                  const { stdout: statsOutput } = await runDocker(
-                    [
-                      'stats',
-                      '--no-stream',
-                      '--format',
-                      '{{json .}}',
-                      containerId,
-                    ],
-                    { ...options, timeout: 15000 },
-                  );
-                  const stats = parseContainers(statsOutput).find((item) =>
-                    String(item.ID || item.Container || '')
-                      .toLowerCase()
-                      .startsWith(containerId.slice(0, 12).toLowerCase()),
-                  );
-                  if (stats) {
-                    metrics = {
-                      cpuPercent: parsePercent(stats.CPUPerc),
-                      memoryUsage: String(stats.MemUsage || ''),
-                    };
-                    metricsMessage = null;
-                  }
-                } catch {
-                  metricsMessage = 'Docker could not provide resource usage.';
+                runningIds.push(containerId);
+                const measured = metricsCache.get(
+                  containerId.slice(0, 12).toLowerCase(),
+                );
+                if (measured) {
+                  metrics = measured;
+                  metricsMessage = null;
+                } else {
+                  metricsMessage = metricsFailed
+                    ? 'Docker could not provide resource usage.'
+                    : 'Measuring resource usage…';
                 }
               }
             } catch (error) {
@@ -671,10 +695,10 @@ function createInstances({
                 : record.message,
           };
         }),
-    ).then((records) =>
-      records.sort((a, b) =>
-        (b.createdAt || '').localeCompare(a.createdAt || ''),
-      ),
+    );
+    refreshMetrics(runningIds);
+    return records.sort((a, b) =>
+      (b.createdAt || '').localeCompare(a.createdAt || ''),
     );
   }
 
