@@ -763,6 +763,49 @@ function createInstances({ root = path.join(__dirname, '..'), run } = {}) {
     }
   }
 
+  // Logs come from Docker while the instance exists; a failed launch shows
+  // the Docker output saved at launch time instead.
+  async function logs(id) {
+    const record = await read(id);
+    const limit = 64 * 1024;
+    const shape = (source, text) => ({
+      id,
+      source,
+      truncated: text.length > limit,
+      text: text.length > limit ? text.slice(-limit) : text,
+    });
+    const saved = async () => {
+      try {
+        return await fs.readFile(path.join(location(id), 'error.log'), 'utf8');
+      } catch (error) {
+        if (error.code === 'ENOENT') return null;
+        throw error;
+      }
+    };
+    const composeFile = path.join(location(id), 'compose.json');
+    let deployed = true;
+    try {
+      await fs.access(composeFile);
+    } catch (error) {
+      if (error.code !== 'ENOENT') throw error;
+      deployed = false;
+    }
+    if (deployed && record.status !== 'failed' && !active.has(id)) {
+      try {
+        const { stdout, stderr } = await runDocker(
+          compose(id, composeFile, 'logs', '--no-color', '--tail', '200', 'app'),
+          { ...options, timeout: 15000 },
+        );
+        return shape('docker', `${stdout || ''}${stderr || ''}`);
+      } catch {
+        const text = await saved();
+        if (text !== null) return shape('launch', text);
+        throw failure('Docker could not provide logs. Start Docker and retry.', 503);
+      }
+    }
+    return shape('launch', (await saved()) ?? '');
+  }
+
   async function remove(id) {
     if (active.has(id) || busy.has(id))
       throw failure('Instance operation is still in progress.', 409);
@@ -802,7 +845,7 @@ function createInstances({ root = path.join(__dirname, '..'), run } = {}) {
     }
   }
 
-  return { engineStatus, launch, list, remove, start, stop };
+  return { engineStatus, launch, list, logs, remove, start, stop };
 }
 
 module.exports = {

@@ -173,3 +173,31 @@ test('stop and start dispatch to the manager and require local JSON', async () =
   assert.equal(unknown.status, 404);
   assert.equal(seen.length, 2);
 });
+
+test('logs are read through the local API only', async () => {
+  const id = 'nucleus-11111111-1111-4111-8111-111111111111';
+  const manager = {
+    async logs(value) {
+      return { id: value, source: 'docker', truncated: false, text: 'ready' };
+    },
+  };
+  const ok = await request({
+    method: 'GET',
+    url: `/api/instances/${id}/logs`,
+    body: null,
+    manager,
+  });
+  assert.equal(ok.status, 200);
+  assert.equal(ok.body.text, 'ready');
+  const foreign = await request({
+    method: 'GET',
+    url: `/api/instances/${id}/logs`,
+    body: null,
+    headers: { 'sec-fetch-site': 'cross-site' },
+    manager,
+  });
+  assert.equal(foreign.status, 403);
+  const post = await request({ url: `/api/instances/${id}/logs`, manager });
+  assert.equal(post.status, 405);
+  assert.equal(post.headers.Allow, 'GET, HEAD');
+});

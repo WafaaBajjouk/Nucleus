@@ -20,8 +20,38 @@ export function initInstanceOverview() {
   const chart = document.querySelector('#instance-chart');
   let loading = false;
   let timer;
+  let lastInstances = [];
+  // Open log panels survive the periodic re-render: id -> latest result.
+  const openLogs = new Map();
+
+  async function loadLogs(id) {
+    try {
+      const response = await fetch(`/api/instances/${id}/logs`, {
+        cache: 'no-store',
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || 'Could not load logs.');
+      return result;
+    } catch (error) {
+      return { error: error.message };
+    }
+  }
+
+  function logPanel(result) {
+    const panel = document.createElement('pre');
+    panel.className = 'instance-logs';
+    panel.textContent = !result
+      ? 'Loading logs…'
+      : result.error
+        ? result.error
+        : `${result.source === 'launch' ? 'Saved at launch:\n' : ''}${
+            result.truncated ? '…\n' : ''
+          }${result.text || 'No output yet.'}`;
+    return panel;
+  }
 
   function render(instances) {
+    lastInstances = instances;
     const counts = {
       up: instances.filter((instance) => instance.runtimeStatus === 'up')
         .length,
@@ -115,6 +145,8 @@ export function initInstanceOverview() {
           message.textContent = instance.message;
           details.append(message);
         }
+        if (openLogs.has(instance.id))
+          details.append(logPanel(openLogs.get(instance.id)));
         row.append(details);
         const badge = document.createElement('span');
         badge.className = `instance-badge ${instance.runtimeStatus}`;
@@ -172,6 +204,25 @@ export function initInstanceOverview() {
           });
           row.append(control);
         }
+        const logsButton = document.createElement('button');
+        logsButton.className = 'instance-logs-toggle';
+        logsButton.type = 'button';
+        logsButton.textContent = openLogs.has(instance.id)
+          ? 'Hide logs'
+          : 'Logs';
+        logsButton.setAttribute('aria-expanded', String(openLogs.has(instance.id)));
+        logsButton.addEventListener('click', async () => {
+          if (openLogs.has(instance.id)) {
+            openLogs.delete(instance.id);
+            render(lastInstances);
+            return;
+          }
+          openLogs.set(instance.id, null);
+          render(lastInstances);
+          openLogs.set(instance.id, await loadLogs(instance.id));
+          if (openLogs.has(instance.id)) render(lastInstances);
+        });
+        row.append(logsButton);
         const remove = document.createElement('button');
         remove.className = 'instance-remove';
         remove.type = 'button';
@@ -217,6 +268,10 @@ export function initInstanceOverview() {
       const result = await response.json();
       if (!response.ok)
         throw new Error(result.error || 'Could not load instance status.');
+      for (const id of openLogs.keys())
+        if (result.some((instance) => instance.id === id))
+          openLogs.set(id, await loadLogs(id));
+        else openLogs.delete(id);
       render(result);
     } catch (error) {
       status.textContent = `${error.message} Instance status will retry automatically.`;
