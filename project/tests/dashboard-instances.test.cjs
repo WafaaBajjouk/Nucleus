@@ -135,3 +135,48 @@ test('overview renders running and not-up totals, distribution and real instance
     ),
   );
 });
+
+test('rows offer Stop for a ready app and Start for a stopped one', async () => {
+  const selectors = [
+    '#instance-list',
+    '#instance-status',
+    '#instance-chart',
+    '#instances-up',
+    '#instances-down',
+    '#instances-unknown',
+    '#instances-starting',
+    '#instances-total',
+  ];
+  const nodes = Object.fromEntries(selectors.map((key) => [key, element()]));
+  const instances = [
+    { id: 'a', name: 'TaskNest', runtimeStatus: 'up', status: 'ready', health: 'healthy', url: null },
+    { id: 'b', name: 'JsonDesk', runtimeStatus: 'down', status: 'stopped', url: null },
+    { id: 'c', name: 'UnitLab', runtimeStatus: 'failed', status: 'failed', url: null },
+  ];
+  const source = fs
+    .readFileSync(path.join(__dirname, '../scripts/dashboard/instances.js'), 'utf8')
+    .replace('export function', 'function');
+  const init = vm.runInNewContext(source + '\ninitInstanceOverview;', {
+    document: {
+      querySelector: (key) => nodes[key],
+      createElement: element,
+      createTextNode: (text) => ({ textContent: text }),
+    },
+    window: { addEventListener() {} },
+    fetch: async () => ({ ok: true, json: async () => instances }),
+    setTimeout() {},
+    clearTimeout() {},
+  });
+  await init();
+
+  const rows = nodes['#instance-list'].children;
+  const control = (row) =>
+    row.children.find((child) => child.className === 'instance-control');
+  assert.equal(control(rows[0]).textContent, 'Stop');
+  assert.equal(control(rows[1]).textContent, 'Start');
+  assert.equal(control(rows[2]), undefined);
+  const badge = rows[1].children.find((child) =>
+    String(child.className).startsWith('instance-badge'),
+  );
+  assert.equal(badge.children.at(-1).textContent, 'Stopped');
+});

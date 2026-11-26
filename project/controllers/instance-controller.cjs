@@ -65,7 +65,26 @@ async function handleInstanceRequest(request, response, instances) {
       }
       json(202, await instances.launch(data.projectId));
     } else if (
+      /^\/api\/instances\/[^/]+\/(stop|start)$/.test(pathname) &&
+      request.method === 'POST'
+    ) {
+      const [, , , id, action] = pathname.split('/');
+      if (!/^nucleus-[a-f0-9-]{36}$/.test(id)) {
+        json(404, { error: 'Unknown instance.' });
+        return true;
+      }
+      // A JSON content type forces a browser preflight for cross-site pages.
+      if (
+        request.headers['content-type']?.split(';')[0].trim() !==
+        'application/json'
+      ) {
+        json(415, { error: 'Send application/json.' });
+        return true;
+      }
+      json(200, await instances[action](id));
+    } else if (
       pathname.startsWith('/api/instances/') &&
+      !pathname.slice('/api/instances/'.length).includes('/') &&
       request.method === 'DELETE'
     ) {
       const id = pathname.slice('/api/instances/'.length);
@@ -82,7 +101,9 @@ async function handleInstanceRequest(request, response, instances) {
           ? 'GET, HEAD'
           : pathname === '/api/instances'
             ? 'GET, HEAD, POST'
-            : 'DELETE',
+            : /\/(stop|start)$/.test(pathname)
+              ? 'POST'
+              : 'DELETE',
       );
       json(405, { error: 'Method not allowed.' });
     }

@@ -507,3 +507,100 @@ test('instance removal deletes only the selected Compose project and its volume'
   );
   assert.ok(down.args.includes('--volumes'));
 });
+
+test('stop and start act on the selected instance only and keep its data', async (t) => {
+  const { root, calls, manager, settled } = await fixture(t);
+  const first = await manager.launch('example:TaskNest');
+  const second = await manager.launch('example:TaskNest');
+  const [readyFirst] = await Promise.all([settled(first.id), settled(second.id)]);
+
+  const stopped = await manager.stop(first.id);
+  assert.equal(stopped.status, 'stopped');
+  const stop = calls.filter((call) => call.args.includes('stop'));
+  assert.equal(stop.length, 1);
+  assert.equal(stop[0].args[2], first.id);
+  assert.ok(!calls.some((call) => call.args.includes('down')));
+
+  const started = await manager.start(first.id);
+  const up = calls.filter(
+    (call) => call.args[2] === first.id && call.args.includes('up'),
+  );
+  assert.equal(up.length, 2);
+  assert.ok(up[1].args.includes('--wait'));
+  assert.ok(up[1].args.includes('--no-build'));
+  assert.equal(started.status, 'ready');
+  assert.notEqual(started.url, readyFirst.url);
+  const record = JSON.parse(
+    await fs.readFile(
+      path.join(root, '.nucleus/instances', first.id, 'instance.json'),
+    ),
+  );
+  assert.equal(record.status, 'ready');
+  assert.equal(record.url, started.url);
+  assert.ok(
+    !calls.some((call) => call.args[2] === second.id && call.args.includes('stop')),
+  );
+});
+
+test('a start whose health check fails is stopped again and reported', async (t) => {
+  let failStart = false;
+  const { calls, manager, settled } = await fixture(t, {
+    async run(args) {
+      if (failStart && args.includes('up'))
+        throw Object.assign(Error('unhealthy'), { stderr: 'container unhealthy' });
+    },
+  });
+  const launched = await manager.launch('example:TaskNest');
+  await settled(launched.id);
+  await manager.stop(launched.id);
+  failStart = true;
+
+  await assert.rejects(manager.start(launched.id), (error) => {
+    assert.equal(error.status, 502);
+    assert.match(error.message, /health check did not pass/);
+    return true;
+  });
+  assert.equal(calls.filter((call) => call.args.includes('stop')).length, 2);
+  const listed = (await manager.list()).find((item) => item.id === launched.id);
+  assert.equal(listed.status, 'stopped');
+});
+
+test('failed launches and unknown instances cannot be stopped or started', async (t) => {
+  const { calls, manager, settled } = await fixture(t, {
+    async run(args) {
+      if (args.includes('up')) throw Error('build failed');
+    },
+  });
+  const launched = await manager.launch('example:TaskNest');
+  await settled(launched.id);
+  const before = calls.length;
+  for (const operation of [manager.stop, manager.start])
+    await assert.rejects(operation(launched.id), { status: 409 });
+  assert.equal(calls.length, before);
+  await assert.rejects(manager.stop('nucleus-not-real'), { status: 404 });
+});
+
+test('a record written by an older version still lists (contract check)', async (t) => {
+  const { root, manager } = await fixture(t);
+  const id = 'nucleus-22222222-2222-4222-8222-222222222222';
+  const directory = path.join(root, '.nucleus/instances', id);
+  await fs.mkdir(directory, { recursive: true });
+  // Fields as written before stop/start existed: no compose.json, no new keys.
+  await fs.writeFile(
+    path.join(directory, 'instance.json'),
+    JSON.stringify({
+      id,
+      projectId: 'example:TaskNest',
+      name: 'TaskNest',
+      status: 'failed',
+      createdAt: '2026-11-02T10:00:00.000Z',
+      message: 'Launch failed during image build and health check.',
+      url: null,
+      image: null,
+    }),
+  );
+  const [listed] = await manager.list();
+  assert.equal(listed.id, id);
+  assert.equal(listed.runtimeStatus, 'failed');
+  assert.equal(listed.message, 'Launch failed during image build and health check.');
+});
