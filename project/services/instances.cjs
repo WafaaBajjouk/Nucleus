@@ -37,6 +37,7 @@ const unsupportedServiceOptions = [
   'volumes_from',
 ];
 const validId = /^nucleus-[a-f0-9-]{36}$/;
+const requestPattern = /^[a-f0-9-]{36}$/;
 const failure = (message, status = 400) =>
   Object.assign(Error(message), { status });
 const isWithin = (parent, child) => {
@@ -214,6 +215,8 @@ function createInstances({ root = path.join(__dirname, '..'), run } = {}) {
     run || ((args, options) => execute(dockerExecutable, args, options));
   const directory = path.join(root, '.nucleus', 'instances');
   const active = new Set();
+  // Launch requests seen by this process: requestId -> Promise of the record.
+  const requests = new Map();
   // One operation at a time per instance: id -> 'starting' | 'stopping' | 'removing'.
   const busy = new Map();
   const options = {
@@ -414,7 +417,42 @@ function createInstances({ root = path.join(__dirname, '..'), run } = {}) {
     }
   }
 
-  async function launch(projectId) {
+  // A retry with the same requestId returns the first instance instead of
+  // launching a second one (L16 Q3: a timeout does not say if it happened).
+  async function launch(projectId, requestId) {
+    if (requestId === undefined) return createLaunch(projectId);
+    if (typeof requestId !== 'string' || !requestPattern.test(requestId))
+      throw failure('Invalid requestId.');
+    if (!requests.has(requestId)) {
+      const pending = findRequest(requestId).then(
+        (existing) => existing || createLaunch(projectId, requestId),
+      );
+      requests.set(requestId, pending);
+      pending.catch(() => requests.delete(requestId));
+    }
+    const record = await requests.get(requestId);
+    if (record.projectId !== projectId)
+      throw failure('This requestId was used for another project.', 409);
+    return { ...record };
+  }
+
+  async function findRequest(requestId) {
+    let entries;
+    try {
+      entries = await fs.readdir(directory, { withFileTypes: true });
+    } catch (error) {
+      if (error.code === 'ENOENT') return null;
+      throw error;
+    }
+    for (const entry of entries) {
+      if (!entry.isDirectory() || !validId.test(entry.name)) continue;
+      const record = await read(entry.name).catch(() => null);
+      if (record?.requestId === requestId) return record;
+    }
+    return null;
+  }
+
+  async function createLaunch(projectId, requestId) {
     let project;
     let name;
     if (typeof projectId === 'string' && projectId.startsWith('example:')) {
@@ -489,6 +527,7 @@ function createInstances({ root = path.join(__dirname, '..'), run } = {}) {
       message: 'Building and checking the application…',
       url: null,
       image: null,
+      ...(requestId ? { requestId } : {}),
     };
     active.add(record.id);
     try {

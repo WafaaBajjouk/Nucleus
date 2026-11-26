@@ -83,6 +83,7 @@ test('project tooltip launches its own project and renders the app link', async 
   ];
   let getCount = 0;
   let launchRequest;
+  const posts = [];
   const body = element();
   const context = {
     document: {
@@ -103,6 +104,9 @@ test('project tooltip launches its own project and renders the app link', async 
     fetch: async (url, options = {}) => {
       if (options.method === 'POST') {
         launchRequest = { url, body: JSON.parse(options.body) };
+        posts.push(launchRequest.body);
+        // The first answer is lost, as after a timeout.
+        if (posts.length === 1) throw new TypeError('Failed to fetch');
         return {
           ok: true,
           async json() {
@@ -122,6 +126,9 @@ test('project tooltip launches its own project and renders the app link', async 
       return 1;
     },
     clearTimeout() {},
+    crypto: {
+      randomUUID: () => `aaaaaaaa-aaaa-4aaa-8aaa-00000000000${posts.length}`,
+    },
     position() {},
     drawEdges() {},
   };
@@ -160,10 +167,18 @@ test('project tooltip launches its own project and renders the app link', async 
   // The graph selection is TaskNest; the button must name the hovered target.
   assert.equal(state.tooltipLaunch.textContent, 'Launch JsonDesk');
   await state.tooltipLaunch.handlers.click();
+  assert.equal(state.tooltipLaunchStatus.textContent, 'Failed to fetch');
+  await state.tooltipLaunch.handlers.click();
 
+  // The retry reuses the first requestId, so the server cannot launch twice.
+  assert.equal(posts.length, 2);
+  assert.deepEqual(posts[1], posts[0]);
   assert.deepEqual(launchRequest, {
     url: '/api/instances',
-    body: { projectId: 'example:JsonDesk' },
+    body: {
+      projectId: 'example:JsonDesk',
+      requestId: 'aaaaaaaa-aaaa-4aaa-8aaa-000000000000',
+    },
   });
   assert.equal(state.tooltipLaunch.disabled, false);
   assert.equal(state.tooltipLaunch.textContent, 'Launch JsonDesk');

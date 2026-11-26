@@ -604,3 +604,29 @@ test('a record written by an older version still lists (contract check)', async 
   assert.equal(listed.runtimeStatus, 'failed');
   assert.equal(listed.message, 'Launch failed during image build and health check.');
 });
+
+test('a retried launch with the same requestId starts one instance only', async (t) => {
+  const { root, calls, manager, settled } = await fixture(t);
+  const requestId = '33333333-3333-4333-8333-333333333333';
+  const [first, concurrent] = await Promise.all([
+    manager.launch('example:TaskNest', requestId),
+    manager.launch('example:TaskNest', requestId),
+  ]);
+  assert.equal(concurrent.id, first.id);
+  await settled(first.id);
+  const retry = await manager.launch('example:TaskNest', requestId);
+  assert.equal(retry.id, first.id);
+  assert.equal(calls.filter((call) => call.args.includes('up')).length, 1);
+  assert.equal((await manager.list()).length, 1);
+
+  // After a Nucleus restart the request is found in the saved record.
+  const restarted = createInstances({ root, run: async () => ({ stdout: '' }) });
+  assert.equal((await restarted.launch('example:TaskNest', requestId)).id, first.id);
+
+  await assert.rejects(manager.launch('example:UnitLab', requestId), {
+    status: 409,
+  });
+  await assert.rejects(manager.launch('example:TaskNest', 'not-a-uuid'), {
+    status: 400,
+  });
+});
