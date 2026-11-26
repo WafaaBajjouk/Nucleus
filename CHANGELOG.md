@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.1.0
+
+- Logs for a selected instance, or the output saved at a failed launch.
+- Verify: Docker health plus an HTTP answer; result shown on the row.
+
 ## 1.0.0
 
 - Stop and start a selected instance; start passes the health check again.

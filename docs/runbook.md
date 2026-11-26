@@ -4,7 +4,8 @@
 |---|---|---|
 | Port 8000 busy | `Could not start Nucleus` | `PORT=8001 npm start` |
 | Docker not running | Dashboard: engine not reachable | Start Docker (Colima: `colima start`), then **Check again** |
-| Launch failed | Instance **Failed** with a reason | Read `.nucleus/instances/<id>/error.log`, fix the project, **Remove**, launch again |
+| Launch failed | Instance **Failed** with a reason | Open **Logs** (saved launch output), fix the project, **Remove**, launch again |
+| App up but not working | **Verify** shows a failed part | Open **Logs**; fix the app, then **Stop**, **Start** and **Verify** again |
 | Cleanup needed | "Cleanup failed; remove this instance…" | Start Docker, then **Remove** |
 | Start failed | "Start failed: the health check did not pass" | The app was stopped again. Check the app, then **Start** or **Remove** |
 | Nucleus crashed during a launch | **Unknown** or **Starting** that never ends | Restart Nucleus; the state comes from Docker. **Remove** if needed |
