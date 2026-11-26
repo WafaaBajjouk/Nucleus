@@ -201,3 +201,21 @@ test('logs are read through the local API only', async () => {
   assert.equal(post.status, 405);
   assert.equal(post.headers.Allow, 'GET, HEAD');
 });
+
+test('verify dispatches to the manager and needs local JSON', async () => {
+  const id = 'nucleus-11111111-1111-4111-8111-111111111111';
+  const manager = {
+    async verify(value) {
+      return { id: value, passed: true, checks: [] };
+    },
+  };
+  const ok = await request({ url: `/api/instances/${id}/verify`, body: '{}', manager });
+  assert.equal(ok.status, 200);
+  assert.equal(ok.body.passed, true);
+  const plain = await request({
+    url: `/api/instances/${id}/verify`,
+    headers: { 'content-type': 'text/plain' },
+    manager,
+  });
+  assert.equal(plain.status, 415);
+});

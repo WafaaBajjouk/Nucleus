@@ -145,6 +145,15 @@ export function initInstanceOverview() {
           message.textContent = instance.message;
           details.append(message);
         }
+        if (instance.lastCheck) {
+          const check = document.createElement('small');
+          check.className = `instance-check ${instance.lastCheck.passed ? 'passed' : 'failed'}`;
+          const time = new Date(instance.lastCheck.checkedAt).toLocaleTimeString();
+          check.textContent = `${instance.lastCheck.passed ? 'Check passed' : 'Check failed'} · ${instance.lastCheck.checks
+            .map((item) => `${item.passed ? '✓' : '✗'} ${item.name}: ${item.detail}`)
+            .join(' · ')} · ${time}`;
+          details.append(check);
+        }
         if (openLogs.has(instance.id))
           details.append(logPanel(openLogs.get(instance.id)));
         row.append(details);
@@ -203,6 +212,30 @@ export function initInstanceOverview() {
             await refresh();
           });
           row.append(control);
+        }
+        if (instance.runtimeStatus === 'up' && instance.status === 'ready') {
+          const verify = document.createElement('button');
+          verify.className = 'instance-verify';
+          verify.type = 'button';
+          verify.textContent = 'Verify';
+          verify.addEventListener('click', async () => {
+            verify.disabled = true;
+            verify.textContent = 'Checking…';
+            try {
+              const response = await fetch(`/api/instances/${instance.id}/verify`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: '{}',
+              });
+              const result = await response.json();
+              if (!response.ok) throw new Error(result.error || 'Could not run the check.');
+              status.textContent = `${instance.name}: ${result.passed ? 'check passed' : 'check failed'}.`;
+            } catch (error) {
+              status.textContent = error.message;
+            }
+            await refresh();
+          });
+          row.append(verify);
         }
         const logsButton = document.createElement('button');
         logsButton.className = 'instance-logs-toggle';

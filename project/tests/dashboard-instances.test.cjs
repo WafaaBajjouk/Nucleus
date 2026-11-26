@@ -241,3 +241,60 @@ test('a logs panel opens, shows the text safely and stays open after refresh', a
   await toggle().handlers.click();
   assert.equal(panel(), undefined);
 });
+
+test('a ready row offers Verify and shows the saved check result', async () => {
+  const selectors = [
+    '#instance-list',
+    '#instance-status',
+    '#instance-chart',
+    '#instances-up',
+    '#instances-down',
+    '#instances-unknown',
+    '#instances-starting',
+    '#instances-total',
+  ];
+  const nodes = Object.fromEntries(selectors.map((key) => [key, element()]));
+  const instances = [
+    {
+      id: 'a',
+      name: 'TaskNest',
+      runtimeStatus: 'up',
+      status: 'ready',
+      health: 'healthy',
+      url: null,
+      lastCheck: {
+        passed: false,
+        checkedAt: '2026-11-26T21:00:00.000Z',
+        checks: [
+          { name: 'Docker health', passed: true, detail: 'healthy' },
+          { name: 'HTTP answer', passed: false, detail: '500 in 3 ms' },
+        ],
+      },
+    },
+    { id: 'b', name: 'JsonDesk', runtimeStatus: 'down', status: 'stopped', url: null },
+  ];
+  const source = fs
+    .readFileSync(path.join(__dirname, '../scripts/dashboard/instances.js'), 'utf8')
+    .replace('export function', 'function');
+  const init = vm.runInNewContext(source + '\ninitInstanceOverview;', {
+    document: {
+      querySelector: (key) => nodes[key],
+      createElement: element,
+      createTextNode: (text) => ({ textContent: text }),
+    },
+    window: { addEventListener() {} },
+    fetch: async () => ({ ok: true, json: async () => instances }),
+    setTimeout() {},
+    clearTimeout() {},
+  });
+  await init();
+  const [ready, stopped] = nodes['#instance-list'].children;
+  const find = (row, name) => row.children.find((child) => child.className === name);
+  assert.equal(find(ready, 'instance-verify').textContent, 'Verify');
+  assert.equal(find(stopped, 'instance-verify'), undefined);
+  const check = ready.children[1].children.find((child) =>
+    String(child.className).startsWith('instance-check'),
+  );
+  assert.equal(check.className, 'instance-check failed');
+  assert.match(check.textContent, /^Check failed · ✓ Docker health: healthy · ✗ HTTP answer: 500 in 3 ms/);
+});
