@@ -59,9 +59,10 @@ and the record's last message. Only Nucleus writes the record.
 - **Stop and start: yes.** A repeated start on a running app changes
   nothing and runs the health check again; a repeated stop is refused (`409`)
   with no second effect.
-- **Launch: no.** Each launch creates a new instance id, so a retry after a
-  lost answer makes a second instance. The list shows both and two builds at
-  most run at once. **Gap:** an idempotency key per launch request.
+- **Launch: yes, since the fix below.** The browser sends a `requestId` and
+  keeps it until the server answers. A retry with the same id returns the
+  first instance, also after a Nucleus restart (the id is saved in the
+  record). Without it, a retry after a lost answer made a second instance.
 
 **Q4. Can the contract change without changing everyone?** The next change is
 the "Inspect and verify" increment, which adds logs. Its consumer is the
@@ -76,6 +77,8 @@ dashboard shows Docker's health next to the state, so "ready" plus
 "unhealthy" would reveal a missed case. I investigate; a repeat would make me
 check health on every refresh.
 
-## Gap recorded
+## Gap found and fixed
 
-Launch is not idempotent (Q3). It is the next fix before new features.
+Launch was not idempotent (Q3). Fixed right after this review, before new
+features: one `requestId` per launch, tests for a concurrent duplicate, a
+retry, a restart and a reused id for another project.

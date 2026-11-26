@@ -63,7 +63,7 @@ async function handleInstanceRequest(request, response, instances) {
         json(400, { error: 'A projectId is required.' });
         return true;
       }
-      json(202, await instances.launch(data.projectId));
+      json(202, await instances.launch(data.projectId, data.requestId));
     } else if (
       /^\/api\/instances\/[^/]+\/(stop|start)$/.test(pathname) &&
       request.method === 'POST'

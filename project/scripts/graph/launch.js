@@ -25,6 +25,9 @@ export function initGraphLaunch(state) {
   const list = document.querySelector('#graph-instance-list');
   let busy = false;
   let loading = false;
+  // Kept until the server answers, so a retry after a lost answer reuses it
+  // and cannot start a second instance.
+  let pendingLaunch = null;
   let timer;
   state.dockerReady = false;
 
@@ -201,12 +204,15 @@ export function initGraphLaunch(state) {
     launch.disabled = true;
     launch.textContent = 'Starting…';
     status.textContent = `Building and starting ${project.name}…`;
+    if (pendingLaunch?.projectId !== project.id)
+      pendingLaunch = { projectId: project.id, requestId: crypto.randomUUID() };
     try {
       const response = await fetch('/api/instances', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectId: project.id }),
+        body: JSON.stringify(pendingLaunch),
       });
+      pendingLaunch = null;
       const result = await response.json();
       if (!response.ok)
         throw new Error(result.error || 'Could not start project.');
