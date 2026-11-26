@@ -35,7 +35,9 @@ export function initProjectCatalogue() {
         version.textContent = project.version;
         const compose = document.createElement('span');
         compose.textContent = !project.composeFile
-          ? 'No Compose file'
+          ? project.dockerfile
+            ? 'Dockerfile found · Compose generated at launch'
+            : 'No Compose file or Dockerfile'
           : project.launchable === false
             ? 'Compose found · launch unavailable'
             : 'Compose found · launch available';

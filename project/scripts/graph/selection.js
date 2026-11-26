@@ -16,7 +16,9 @@ export function initGraphSelection(state) {
         ? `Public GitHub repository ${project.owner}/${project.name}`
         : 'Bundled demo project';
     const deployment = !project.composeFile
-      ? 'No Compose file found.'
+      ? project.dockerfile
+        ? 'Dockerfile found; a Compose file is generated at launch.'
+        : 'No Compose file or Dockerfile found.'
       : project.launchable === false
         ? 'Compose found; launch is unavailable.'
         : `Compose: ${project.composeFile}.`;
