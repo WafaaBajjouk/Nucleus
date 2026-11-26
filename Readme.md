@@ -68,5 +68,4 @@ CI runs both on every pull request and push to `main`
 - [Checkpoint E: environments, CI/CD and release](checkpoint-e.md)
 - [Architecture decisions](docs/adr/)
 - [Recovery runbook](docs/runbook.md) · [Changelog](CHANGELOG.md)
-- [AI use log](ai-use.md)
 
