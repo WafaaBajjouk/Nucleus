@@ -21,6 +21,9 @@ npm start
 
 Open http://localhost:8000. Browsing works without Docker.
 
+Node is pinned in `project/.nvmrc`. The example images name their base image
+by digest (`node:22-alpine@sha256:…`), so a rebuild uses the same base.
+
 ## Architecture
 
 ```mermaid
