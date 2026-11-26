@@ -209,7 +209,21 @@ async function validateComposeConfig(config, instanceId, source, expectedPort) {
   return service;
 }
 
-function createInstances({ root = path.join(__dirname, '..'), run } = {}) {
+async function httpProbe(url) {
+  const started = Date.now();
+  const response = await fetch(url, {
+    redirect: 'manual',
+    signal: AbortSignal.timeout(5000),
+  });
+  await response.body?.cancel();
+  return { status: response.status, ms: Date.now() - started };
+}
+
+function createInstances({
+  root = path.join(__dirname, '..'),
+  run,
+  probe = httpProbe,
+} = {}) {
   const dockerExecutable = findDockerExecutable();
   const runDocker =
     run || ((args, options) => execute(dockerExecutable, args, options));
@@ -639,6 +653,7 @@ function createInstances({ root = path.join(__dirname, '..'), run } = {}) {
             name: record.name,
             createdAt: record.createdAt,
             status: record.status,
+            lastCheck: record.lastCheck || null,
             url:
               runtimeStatus === 'up' &&
               typeof record.url === 'string' &&
@@ -665,7 +680,11 @@ function createInstances({ root = path.join(__dirname, '..'), run } = {}) {
 
   // Stop and start act on one instance only and keep its data. A start passes
   // the same health gate as a launch, so "ready" still means healthy.
-  async function controllable(id, allowed) {
+  async function controllable(
+    id,
+    allowed,
+    message = 'Only a launched instance can be stopped or started.',
+  ) {
     if (active.has(id) || busy.has(id))
       throw failure('Instance operation is still in progress.', 409);
     const record = await read(id);
@@ -676,8 +695,7 @@ function createInstances({ root = path.join(__dirname, '..'), run } = {}) {
       if (error.code !== 'ENOENT') throw error;
       throw failure('This instance has no deployment to control.', 409);
     }
-    if (!allowed.includes(record.status))
-      throw failure('Only a launched instance can be stopped or started.', 409);
+    if (!allowed.includes(record.status)) throw failure(message, 409);
     return { record, composeFile };
   }
 
@@ -697,6 +715,7 @@ function createInstances({ root = path.join(__dirname, '..'), run } = {}) {
         );
       }
       record.status = 'stopped';
+      record.lastCheck = null;
       record.message = 'Stopped. Its data is kept; start it again when needed.';
       await save(record);
       return { id, status: record.status, message: record.message };
@@ -750,6 +769,7 @@ function createInstances({ root = path.join(__dirname, '..'), run } = {}) {
         throw failure(record.message, 502);
       }
       record.status = 'ready';
+      record.lastCheck = null;
       record.message = 'Started again; health check passed.';
       await save(record);
       return {
@@ -806,6 +826,67 @@ function createInstances({ root = path.join(__dirname, '..'), run } = {}) {
     return shape('launch', (await saved()) ?? '');
   }
 
+  // The defined check: Docker reports the app running and healthy, and the
+  // app answers HTTP on its local URL. Both must pass; the result is saved.
+  async function verify(id) {
+    const { record, composeFile } = await controllable(
+      id,
+      ['ready'],
+      'Only a ready instance can be verified. Start it first.',
+    );
+    busy.set(id, 'verifying');
+    try {
+      const checks = [];
+      let containers = [];
+      try {
+        const { stdout } = await runDocker(
+          compose(id, composeFile, 'ps', '--all', '--format', 'json'),
+          { ...options, timeout: 15000 },
+        );
+        containers = parseContainers(stdout);
+      } catch {
+        throw failure('Docker could not report this instance. Start Docker and retry.', 503);
+      }
+      const state = containerState(containers);
+      const health = String(containers[0]?.Health || '').toLowerCase();
+      checks.push({
+        name: 'Docker health',
+        passed: state === 'up' && health === 'healthy',
+        detail: state === 'up' ? health || 'no health status' : state,
+      });
+      const urlOk =
+        typeof record.url === 'string' &&
+        /^http:\/\/127\.0\.0\.1:\d{1,5}$/.test(record.url);
+      if (!urlOk || state !== 'up') {
+        checks.push({ name: 'HTTP answer', passed: false, detail: 'app is not up' });
+      } else {
+        try {
+          const { status, ms } = await probe(`${record.url}/`);
+          checks.push({
+            name: 'HTTP answer',
+            passed: status >= 200 && status < 400,
+            detail: `${status} in ${ms} ms`,
+          });
+        } catch (error) {
+          checks.push({
+            name: 'HTTP answer',
+            passed: false,
+            detail: error.name === 'TimeoutError' ? 'no answer in 5 s' : 'connection failed',
+          });
+        }
+      }
+      record.lastCheck = {
+        passed: checks.every((check) => check.passed),
+        checkedAt: new Date().toISOString(),
+        checks,
+      };
+      await save(record);
+      return { id, ...record.lastCheck };
+    } finally {
+      busy.delete(id);
+    }
+  }
+
   async function remove(id) {
     if (active.has(id) || busy.has(id))
       throw failure('Instance operation is still in progress.', 409);
@@ -845,7 +926,7 @@ function createInstances({ root = path.join(__dirname, '..'), run } = {}) {
     }
   }
 
-  return { engineStatus, launch, list, logs, remove, start, stop };
+  return { engineStatus, launch, list, logs, remove, start, stop, verify };
 }
 
 module.exports = {

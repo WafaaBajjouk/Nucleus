@@ -493,6 +493,7 @@ h1 {
 }
 .instance-open,
 .instance-control,
+.instance-verify,
 .instance-logs-toggle,
 .instance-remove {
   flex: 0 0 auto;
@@ -500,6 +501,7 @@ h1 {
   font-size: 10px;
 }
 .instance-control,
+.instance-verify,
 .instance-logs-toggle,
 .instance-remove {
   padding: 6px 9px;
@@ -510,9 +512,21 @@ h1 {
   cursor: pointer;
 }
 .instance-control:disabled,
+.instance-verify:disabled,
 .instance-remove:disabled {
   cursor: wait;
   opacity: 0.6;
+}
+.instance-check {
+  display: block;
+  margin-top: 6px;
+  font-weight: 600;
+}
+.instance-check.passed {
+  color: var(--status-up);
+}
+.instance-check.failed {
+  color: var(--status-down);
 }
 .instance-logs {
   max-height: 220px;

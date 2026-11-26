@@ -75,7 +75,7 @@ async function handleInstanceRequest(request, response, instances) {
       }
       json(200, await instances.logs(id));
     } else if (
-      /^\/api\/instances\/[^/]+\/(stop|start)$/.test(pathname) &&
+      /^\/api\/instances\/[^/]+\/(stop|start|verify)$/.test(pathname) &&
       request.method === 'POST'
     ) {
       const [, , , id, action] = pathname.split('/');
@@ -111,7 +111,7 @@ async function handleInstanceRequest(request, response, instances) {
           ? 'GET, HEAD'
           : pathname === '/api/instances'
             ? 'GET, HEAD, POST'
-            : /\/(stop|start)$/.test(pathname)
+            : /\/(stop|start|verify)$/.test(pathname)
               ? 'POST'
               : /\/logs$/.test(pathname)
                 ? 'GET, HEAD'

@@ -46,6 +46,7 @@ async function fixture(t, behavior = {}) {
   let nextPort = 45000;
   const manager = createInstances({
     root,
+    probe: behavior.probe,
     async run(args, options) {
       calls.push({ args, options });
       await behavior.run?.(args, options);
@@ -96,7 +97,7 @@ async function fixture(t, behavior = {}) {
             {
               ID: '0123456789ab',
               State: 'running',
-              Health: 'healthy',
+              Health: behavior.health?.() ?? 'healthy',
             },
           ]),
         };
@@ -673,4 +674,56 @@ test('a failed launch shows the Docker output saved at launch', async (t) => {
   assert.equal(result.source, 'launch');
   assert.match(result.text, /missing script/);
   assert.ok(!calls.some((call) => call.args.includes('logs')));
+});
+
+test('verify passes only when Docker health and the HTTP answer both pass', async (t) => {
+  let health = 'healthy';
+  let answer = async () => ({ status: 200, ms: 7 });
+  const probed = [];
+  const { root, manager, settled } = await fixture(t, {
+    health: () => health,
+    probe: async (url) => {
+      probed.push(url);
+      return answer();
+    },
+  });
+  const launched = await manager.launch('example:TaskNest');
+  const ready = await settled(launched.id);
+
+  const passed = await manager.verify(launched.id);
+  assert.equal(passed.passed, true);
+  assert.deepEqual(
+    passed.checks.map((check) => [check.name, check.passed, check.detail]),
+    [
+      ['Docker health', true, 'healthy'],
+      ['HTTP answer', true, '200 in 7 ms'],
+    ],
+  );
+  assert.deepEqual(probed, [`${ready.url}/`]);
+  const listed = (await manager.list()).find((item) => item.id === launched.id);
+  assert.equal(listed.lastCheck.passed, true);
+
+  answer = async () => ({ status: 500, ms: 3 });
+  assert.equal((await manager.verify(launched.id)).passed, false);
+  answer = async () => {
+    throw Object.assign(Error('timeout'), { name: 'TimeoutError' });
+  };
+  const timedOut = await manager.verify(launched.id);
+  assert.equal(timedOut.checks[1].detail, 'no answer in 5 s');
+  health = 'unhealthy';
+  answer = async () => ({ status: 200, ms: 4 });
+  const unhealthy = await manager.verify(launched.id);
+  assert.equal(unhealthy.passed, false);
+  assert.equal(unhealthy.checks[0].detail, 'unhealthy');
+
+  const record = JSON.parse(
+    await fs.readFile(path.join(root, '.nucleus/instances', launched.id, 'instance.json')),
+  );
+  assert.equal(record.lastCheck.passed, false);
+  await manager.stop(launched.id);
+  await assert.rejects(manager.verify(launched.id), {
+    status: 409,
+    message: 'Only a ready instance can be verified. Start it first.',
+  });
+  assert.equal((await manager.list())[0].lastCheck, null);
 });
