@@ -40,7 +40,7 @@ The server binds to loopback. Imported projects need a supported root Compose
 file with one `app` service, one TCP port and a healthcheck. Without a Compose
 file, a root Dockerfile with one `EXPOSE` port and a `HEALTHCHECK` is enough:
 Nucleus generates the Compose file at launch. Review their code before launch. An instance is reported ready only after its health check
-passes. Docker status and resource figures are refreshed periodically; they
+passes, also after a stop and start. Docker status and resource figures are refreshed periodically; they
 are not continuous monitoring.
 
 ## Checks

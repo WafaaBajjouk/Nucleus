@@ -214,7 +214,8 @@ function createInstances({ root = path.join(__dirname, '..'), run } = {}) {
     run || ((args, options) => execute(dockerExecutable, args, options));
   const directory = path.join(root, '.nucleus', 'instances');
   const active = new Set();
-  const removing = new Set();
+  // One operation at a time per instance: id -> 'starting' | 'stopping' | 'removing'.
+  const busy = new Map();
   const options = {
     timeout: 180000,
     maxBuffer: 4 * 1024 * 1024,
@@ -520,7 +521,7 @@ function createInstances({ root = path.join(__dirname, '..'), run } = {}) {
           let health = 'unknown';
           let metrics = null;
           let metricsMessage = 'Resource usage unavailable from Docker.';
-          if (active.has(record.id)) {
+          if (active.has(record.id) || busy.get(record.id) === 'starting') {
             runtimeStatus = 'starting';
           } else {
             const composeFile = path.join(location(record.id), 'compose.json');
@@ -598,6 +599,7 @@ function createInstances({ root = path.join(__dirname, '..'), run } = {}) {
             projectId: record.projectId,
             name: record.name,
             createdAt: record.createdAt,
+            status: record.status,
             url:
               runtimeStatus === 'up' &&
               typeof record.url === 'string' &&
@@ -622,10 +624,110 @@ function createInstances({ root = path.join(__dirname, '..'), run } = {}) {
     );
   }
 
-  async function remove(id) {
-    if (active.has(id) || removing.has(id))
+  // Stop and start act on one instance only and keep its data. A start passes
+  // the same health gate as a launch, so "ready" still means healthy.
+  async function controllable(id, allowed) {
+    if (active.has(id) || busy.has(id))
       throw failure('Instance operation is still in progress.', 409);
-    removing.add(id);
+    const record = await read(id);
+    const composeFile = path.join(location(id), 'compose.json');
+    try {
+      await fs.access(composeFile);
+    } catch (error) {
+      if (error.code !== 'ENOENT') throw error;
+      throw failure('This instance has no deployment to control.', 409);
+    }
+    if (!allowed.includes(record.status))
+      throw failure('Only a launched instance can be stopped or started.', 409);
+    return { record, composeFile };
+  }
+
+  async function stop(id) {
+    const { record, composeFile } = await controllable(id, ['ready']);
+    busy.set(id, 'stopping');
+    try {
+      try {
+        await runDocker(compose(id, composeFile, 'stop', '--timeout', '10'), {
+          ...options,
+          timeout: 60000,
+        });
+      } catch {
+        throw failure(
+          'Could not stop this instance. Start Docker and retry.',
+          503,
+        );
+      }
+      record.status = 'stopped';
+      record.message = 'Stopped. Its data is kept; start it again when needed.';
+      await save(record);
+      return { id, status: record.status, message: record.message };
+    } finally {
+      busy.delete(id);
+    }
+  }
+
+  async function start(id) {
+    const { record, composeFile } = await controllable(id, ['stopped', 'ready']);
+    busy.set(id, 'starting');
+    try {
+      try {
+        await runDocker(
+          compose(
+            id,
+            composeFile,
+            'up',
+            '--no-build',
+            '--no-recreate',
+            '--wait',
+            '--wait-timeout',
+            '60',
+          ),
+          options,
+        );
+        const config = JSON.parse(await fs.readFile(composeFile, 'utf8'));
+        const target = String(config.services.app.ports[0].target);
+        const { stdout } = await runDocker(
+          compose(id, composeFile, 'port', 'app', target),
+          { ...options, timeout: 15000 },
+        );
+        const match = stdout.trim().match(/^127\.0\.0\.1:(\d+)$/);
+        if (!match || Number(match[1]) < 1 || Number(match[1]) > 65535)
+          throw failure('Docker did not return a valid local application port.');
+        record.url = `http://127.0.0.1:${match[1]}`;
+      } catch (error) {
+        if (error.stderr)
+          await fs
+            .writeFile(path.join(location(id), 'error.log'), error.stderr)
+            .catch(() => {});
+        // Never leave a started but unhealthy app that looks usable.
+        await runDocker(compose(id, composeFile, 'stop', '--timeout', '10'), {
+          ...options,
+          timeout: 60000,
+        }).catch(() => {});
+        record.status = 'stopped';
+        record.message =
+          'Start failed: the health check did not pass in time. The instance was stopped again.';
+        await save(record);
+        throw failure(record.message, 502);
+      }
+      record.status = 'ready';
+      record.message = 'Started again; health check passed.';
+      await save(record);
+      return {
+        id,
+        status: record.status,
+        url: record.url,
+        message: record.message,
+      };
+    } finally {
+      busy.delete(id);
+    }
+  }
+
+  async function remove(id) {
+    if (active.has(id) || busy.has(id))
+      throw failure('Instance operation is still in progress.', 409);
+    busy.set(id, 'removing');
     try {
       const record = await read(id);
       const composeFile = path.join(location(id), 'compose.json');
@@ -657,11 +759,11 @@ function createInstances({ root = path.join(__dirname, '..'), run } = {}) {
       }
       await fs.rm(location(record.id), { recursive: true, force: true });
     } finally {
-      removing.delete(id);
+      busy.delete(id);
     }
   }
 
-  return { engineStatus, launch, list, remove };
+  return { engineStatus, launch, list, remove, start, stop };
 }
 
 module.exports = {

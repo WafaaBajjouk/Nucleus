@@ -492,11 +492,13 @@ h1 {
   color: var(--muted);
 }
 .instance-open,
+.instance-control,
 .instance-remove {
   flex: 0 0 auto;
   color: var(--accent);
   font-size: 10px;
 }
+.instance-control,
 .instance-remove {
   padding: 6px 9px;
   border: 1px solid var(--line);
@@ -504,6 +506,11 @@ h1 {
   background: transparent;
   color: var(--text);
   cursor: pointer;
+}
+.instance-control:disabled,
+.instance-remove:disabled {
+  cursor: wait;
+  opacity: 0.6;
 }
 .instance-status {
   margin-top: 12px;

@@ -69,7 +69,9 @@ export function initInstanceOverview() {
           instance.runtimeStatus === 'up'
             ? 'Up'
             : instance.runtimeStatus === 'down'
-              ? 'Not up'
+              ? instance.status === 'stopped'
+                ? 'Stopped'
+                : 'Not up'
               : instance.runtimeStatus === 'failed'
                 ? 'Failed'
                 : instance.runtimeStatus === 'starting'
@@ -133,6 +135,42 @@ export function initInstanceOverview() {
           open.rel = 'noopener noreferrer';
           open.textContent = 'Open app ↗';
           row.append(open);
+        }
+        const action =
+          instance.runtimeStatus === 'up' && instance.status === 'ready'
+            ? 'stop'
+            : instance.runtimeStatus === 'down' &&
+                ['stopped', 'ready'].includes(instance.status)
+              ? 'start'
+              : null;
+        if (action) {
+          const control = document.createElement('button');
+          control.className = 'instance-control';
+          control.type = 'button';
+          control.textContent = action === 'stop' ? 'Stop' : 'Start';
+          control.addEventListener('click', async () => {
+            control.disabled = true;
+            control.textContent =
+              action === 'stop' ? 'Stopping…' : 'Starting…';
+            try {
+              const response = await fetch(
+                `/api/instances/${instance.id}/${action}`,
+                {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: '{}',
+                },
+              );
+              const result = await response.json();
+              if (!response.ok)
+                throw new Error(result.error || `Could not ${action} instance.`);
+              status.textContent = `${instance.name}: ${result.message}`;
+            } catch (error) {
+              status.textContent = error.message;
+            }
+            await refresh();
+          });
+          row.append(control);
         }
         const remove = document.createElement('button');
         remove.className = 'instance-remove';

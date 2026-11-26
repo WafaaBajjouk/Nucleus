@@ -131,3 +131,45 @@ test('instance reads and deletes dispatch to the manager', async () => {
     404,
   );
 });
+
+test('stop and start dispatch to the manager and require local JSON', async () => {
+  const id = 'nucleus-11111111-1111-4111-8111-111111111111';
+  const seen = [];
+  const manager = {
+    async stop(value) {
+      seen.push(['stop', value]);
+      return { id: value, status: 'stopped' };
+    },
+    async start(value) {
+      seen.push(['start', value]);
+      return { id: value, status: 'ready' };
+    },
+  };
+  for (const action of ['stop', 'start']) {
+    const result = await request({
+      url: `/api/instances/${id}/${action}`,
+      body: '{}',
+      manager,
+    });
+    assert.equal(result.status, 200);
+  }
+  assert.deepEqual(seen, [
+    ['stop', id],
+    ['start', id],
+  ]);
+  const plain = await request({
+    url: `/api/instances/${id}/stop`,
+    headers: { 'content-type': 'text/plain' },
+    manager,
+  });
+  assert.equal(plain.status, 415);
+  const foreign = await request({
+    url: `/api/instances/${id}/stop`,
+    headers: { origin: 'https://example.com' },
+    manager,
+  });
+  assert.equal(foreign.status, 403);
+  const unknown = await request({ url: '/api/instances/bad/stop', manager });
+  assert.equal(unknown.status, 404);
+  assert.equal(seen.length, 2);
+});
