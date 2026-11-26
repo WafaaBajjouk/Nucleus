@@ -1,0 +1,81 @@
+# Checkpoint D — Architecture and changeability
+
+## The view
+
+The context view is in the [README](Readme.md#architecture). Nucleus is one
+local Node process on `127.0.0.1`. Docker Engine runs the launched apps;
+GitHub is used only to clone public repositories.
+
+| Part | Owns | Code |
+|---|---|---|
+| Browser UI | dashboard, graph, import form | `project/scripts/` |
+| HTTP controllers | local-only checks, routes | `project/controllers/` |
+| Instance service | validate, launch, stop, start, remove | `project/services/instances.cjs` |
+| Compose generator | Compose from a Dockerfile | `project/services/compose-generator.cjs` |
+| Catalogues | examples and imported repositories | `project/models/` |
+| Instance records | intent and last message, one per instance | `.nucleus/instances/` |
+
+## One flow: launch a project
+
+```mermaid
+sequenceDiagram
+    participant UI as Browser
+    participant C as Controller
+    participant S as Instance service
+    participant D as Docker
+    UI->>C: POST /api/instances {projectId}
+    C->>S: launch(projectId)
+    S-->>UI: 202, record "starting"
+    S->>D: compose config (validate: one app, one port, healthcheck)
+    S->>D: compose up --build --wait
+    S->>D: compose port app
+    S->>S: record "ready" + URL
+    UI->>C: GET /api/instances (every 3 s)
+    C->>S: list()
+    S->>D: compose ps (live state)
+```
+
+## One choice I defend
+
+**Docker decides runtime state, not my records**
+([ADR 0002](docs/adr/0002-docker-is-the-source-of-truth.md)). The record can
+be stale: a container can crash or be removed outside Nucleus. So every
+refresh asks Docker, and "Unknown" is shown when Docker cannot answer.
+
+All decisions: [ADRs](docs/adr/).
+
+## L16 questions
+
+**Q1. What breaks if we remove a component?** Remove the Compose validation
+in the instance service, and an imported repository could run privileged,
+mount the host or publish on every interface. The cost is low: one function
+and its tests. Some valid layouts are refused; that is accepted.
+
+**Q2. Who decides the truth when copies disagree?** Docker, for runtime
+state. The record is a copy. If they disagree, the user sees Docker's state
+and the record's last message. Only Nucleus writes the record.
+
+**Q3. After a timeout, is retrying safe?**
+- **Stop and start: yes.** A repeated start on a running app changes
+  nothing and runs the health check again; a repeated stop is refused (`409`)
+  with no second effect.
+- **Launch: no.** Each launch creates a new instance id, so a retry after a
+  lost answer makes a second instance. The list shows both and two builds at
+  most run at once. **Gap:** an idempotency key per launch request.
+
+**Q4. Can the contract change without changing everyone?** The next change is
+the "Inspect and verify" increment, which adds logs. Its consumer is the
+dashboard (`scripts/dashboard/instances.js`). New fields are added, never
+renamed. A test lists a record written by an older version, so a break shows
+before release. I own the contract and the change.
+
+**Q5. How would I discover the design no longer fits?** Promise: "ready" means
+the health check passed. Tests falsify it before release (a project without a
+health check is refused; a failed start is stopped again). At runtime the
+dashboard shows Docker's health next to the state, so "ready" plus
+"unhealthy" would reveal a missed case. I investigate; a repeat would make me
+check health on every refresh.
+
+## Gap recorded
+
+Launch is not idempotent (Q3). It is the next fix before new features.

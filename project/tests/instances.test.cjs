@@ -579,3 +579,28 @@ test('failed launches and unknown instances cannot be stopped or started', async
   assert.equal(calls.length, before);
   await assert.rejects(manager.stop('nucleus-not-real'), { status: 404 });
 });
+
+test('a record written by an older version still lists (contract check)', async (t) => {
+  const { root, manager } = await fixture(t);
+  const id = 'nucleus-22222222-2222-4222-8222-222222222222';
+  const directory = path.join(root, '.nucleus/instances', id);
+  await fs.mkdir(directory, { recursive: true });
+  // Fields as written before stop/start existed: no compose.json, no new keys.
+  await fs.writeFile(
+    path.join(directory, 'instance.json'),
+    JSON.stringify({
+      id,
+      projectId: 'example:TaskNest',
+      name: 'TaskNest',
+      status: 'failed',
+      createdAt: '2026-11-02T10:00:00.000Z',
+      message: 'Launch failed during image build and health check.',
+      url: null,
+      image: null,
+    }),
+  );
+  const [listed] = await manager.list();
+  assert.equal(listed.id, id);
+  assert.equal(listed.runtimeStatus, 'failed');
+  assert.equal(listed.message, 'Launch failed during image build and health check.');
+});

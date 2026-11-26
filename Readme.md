@@ -60,4 +60,6 @@ CI runs both on every pull request and push to `main`
 - [Checkpoint A: claims, context and evidence](checkpoint-a.md)
 - [Checkpoint B: lifecycle and specification](checkpoint-b.md)
 - [Checkpoint C: quality evidence](checkpoint-c.md)
+- [Checkpoint D: architecture and changeability](checkpoint-d.md)
+- [Architecture decisions](docs/adr/)
 
