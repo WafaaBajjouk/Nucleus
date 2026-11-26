@@ -64,5 +64,7 @@ CI runs both on every pull request and push to `main`
 - [Checkpoint B: lifecycle and specification](checkpoint-b.md)
 - [Checkpoint C: quality evidence](checkpoint-c.md)
 - [Checkpoint D: architecture and changeability](checkpoint-d.md)
+- [Checkpoint E: environments, CI/CD and release](checkpoint-e.md)
 - [Architecture decisions](docs/adr/)
+- [Recovery runbook](docs/runbook.md) · [Changelog](CHANGELOG.md)
 
