@@ -4,6 +4,7 @@
 
 A local dashboard to browse four demo projects, import public GitHub
 repositories, and launch supported Docker Compose projects from a graph.
+Each instance can be stopped, started, inspected (logs) and verified.
 Each launch runs in its own isolated Compose project on a loopback port.
 Nucleus is local and single-user: it has no accounts or permissions.
 

@@ -14,10 +14,9 @@ Compose structures of imported projects.
 | Browse projects | Implemented: developers can browse bundled examples and imported repositories. | Projects appear in the catalogue and can be selected. |
 | Launch a project | Implemented: a supported project runs in an isolated Compose instance. | Unsupported setup is rejected; each instance has its own project name and loopback port; Docker reports its status and health; removal works. |
 | Control an instance | Implemented (26 Nov, [spec](docs/spec-stop-start.md)): developers can stop and start a selected instance. | Only that instance is affected, displayed state matches Docker, and errors are visible. |
-| Inspect and verify | Planned: developers can inspect an instance's logs and run a defined check. | Results come from the selected instance; pass and failure are visible and tested. |
+| Inspect and verify | Implemented (26 Nov, [spec](docs/spec-inspect-verify.md)): developers can inspect an instance's logs and run a defined check. | Results come from the selected instance; pass and failure are visible and tested. |
 
-These are separate increments: the first three describe existing behaviour; the
-last is a plan, not an implemented or tested feature.
+All four increments are implemented and tested.
 
 ## Checks and feedback
 
