@@ -630,3 +630,47 @@ test('a retried launch with the same requestId starts one instance only', async 
     status: 400,
   });
 });
+
+test('logs come from the selected instance, or from the saved launch output', async (t) => {
+  let dockerDown = false;
+  const { root, calls, manager, settled } = await fixture(t, {
+    async run(args) {
+      if (dockerDown && args.includes('logs')) throw Error('engine stopped');
+    },
+  });
+  const launched = await manager.launch('example:TaskNest');
+  await settled(launched.id);
+
+  const live = await manager.logs(launched.id);
+  assert.equal(live.source, 'docker');
+  const call = calls.find((item) => item.args.includes('logs'));
+  assert.equal(call.args[2], launched.id);
+  assert.ok(call.args.includes('--tail'));
+
+  dockerDown = true;
+  await assert.rejects(manager.logs(launched.id), { status: 503 });
+  await fs.writeFile(
+    path.join(root, '.nucleus/instances', launched.id, 'error.log'),
+    'x'.repeat(70 * 1024) + 'last line',
+  );
+  const saved = await manager.logs(launched.id);
+  assert.equal(saved.source, 'launch');
+  assert.equal(saved.truncated, true);
+  assert.ok(saved.text.endsWith('last line'));
+  await assert.rejects(manager.logs('nucleus-not-real'), { status: 404 });
+});
+
+test('a failed launch shows the Docker output saved at launch', async (t) => {
+  const { calls, manager, settled } = await fixture(t, {
+    async run(args) {
+      if (args.includes('up'))
+        throw Object.assign(Error('build failed'), { stderr: 'npm ERR! missing script' });
+    },
+  });
+  const launched = await manager.launch('example:TaskNest');
+  await settled(launched.id);
+  const result = await manager.logs(launched.id);
+  assert.equal(result.source, 'launch');
+  assert.match(result.text, /missing script/);
+  assert.ok(!calls.some((call) => call.args.includes('logs')));
+});

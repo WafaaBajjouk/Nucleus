@@ -65,6 +65,16 @@ async function handleInstanceRequest(request, response, instances) {
       }
       json(202, await instances.launch(data.projectId, data.requestId));
     } else if (
+      /^\/api\/instances\/[^/]+\/logs$/.test(pathname) &&
+      ['GET', 'HEAD'].includes(request.method)
+    ) {
+      const id = pathname.split('/')[3];
+      if (!/^nucleus-[a-f0-9-]{36}$/.test(id)) {
+        json(404, { error: 'Unknown instance.' });
+        return true;
+      }
+      json(200, await instances.logs(id));
+    } else if (
       /^\/api\/instances\/[^/]+\/(stop|start)$/.test(pathname) &&
       request.method === 'POST'
     ) {
@@ -103,6 +113,8 @@ async function handleInstanceRequest(request, response, instances) {
             ? 'GET, HEAD, POST'
             : /\/(stop|start)$/.test(pathname)
               ? 'POST'
+              : /\/logs$/.test(pathname)
+                ? 'GET, HEAD'
               : 'DELETE',
       );
       json(405, { error: 'Method not allowed.' });

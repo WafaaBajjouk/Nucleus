@@ -180,3 +180,64 @@ test('rows offer Stop for a ready app and Start for a stopped one', async () => 
   );
   assert.equal(badge.children.at(-1).textContent, 'Stopped');
 });
+
+test('a logs panel opens, shows the text safely and stays open after refresh', async () => {
+  const selectors = [
+    '#instance-list',
+    '#instance-status',
+    '#instance-chart',
+    '#instances-up',
+    '#instances-down',
+    '#instances-unknown',
+    '#instances-starting',
+    '#instances-total',
+  ];
+  const nodes = Object.fromEntries(selectors.map((key) => [key, element()]));
+  const instances = [
+    { id: 'a', name: 'TaskNest', runtimeStatus: 'up', status: 'ready', health: 'healthy', url: null },
+  ];
+  const clickable = () => {
+    const node = element();
+    node.handlers = {};
+    node.addEventListener = (type, handler) => (node.handlers[type] = handler);
+    return node;
+  };
+  let refresh;
+  const source = fs
+    .readFileSync(path.join(__dirname, '../scripts/dashboard/instances.js'), 'utf8')
+    .replace('export function', 'function');
+  const init = vm.runInNewContext(source + '\ninitInstanceOverview;', {
+    document: {
+      querySelector: (key) => nodes[key],
+      createElement: clickable,
+      createTextNode: (text) => ({ textContent: text }),
+    },
+    window: { addEventListener() {} },
+    fetch: async (url) => ({
+      ok: true,
+      json: async () =>
+        url.endsWith('/logs')
+          ? { id: 'a', source: 'docker', truncated: false, text: '<b>listening</b>' }
+          : instances,
+    }),
+    setTimeout(callback) {
+      refresh = callback;
+    },
+    clearTimeout() {},
+  });
+  await init();
+
+  const row = () => nodes['#instance-list'].children[0];
+  const toggle = () =>
+    row().children.find((child) => child.className === 'instance-logs-toggle');
+  const panel = () =>
+    row().children[1].children.find((child) => child.className === 'instance-logs');
+  assert.equal(toggle().textContent, 'Logs');
+  await toggle().handlers.click();
+  assert.equal(panel().textContent, '<b>listening</b>');
+  assert.equal(toggle().textContent, 'Hide logs');
+  await refresh();
+  assert.equal(panel().textContent, '<b>listening</b>');
+  await toggle().handlers.click();
+  assert.equal(panel(), undefined);
+});
