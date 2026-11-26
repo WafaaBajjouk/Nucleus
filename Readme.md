@@ -51,6 +51,10 @@ npm test
 npm run test:examples
 ```
 
+CI runs both on every pull request and push to `main`
+([workflow](.github/workflows/ci.yml)), on Linux with the Node version in
+`project/.nvmrc`.
+
 ## Project record
 
 - [Checkpoint A: claims, context and evidence](checkpoint-a.md)
